@@ -15,7 +15,6 @@ import Timeline from '../components/TimeLine/timeline';
 import HomeCard from '../components/Card_home/home_card';
 import Horizontal from '../components/Graphs/Horizontal/horizontal';
 import Vertical from '../components/Graphs/Vertical/vertical';
-import Notifications from '../components/notifications/notifications';
 // Sample data for demonstration
 
 const statusOptions: SelectOption[] = [

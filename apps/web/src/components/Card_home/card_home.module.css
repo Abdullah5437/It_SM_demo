@@ -1,17 +1,5 @@
 @import url("https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap");
 
-:root {
-  --clr-blue: #1967b0;
-  --clr-green: #01c3a8;
-  --clr-orange: #ffb741;
-  --clr-purple: #8b5cf6;
-}
-
-:global(*) {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
 
 .section {
   width: 100%;
@@ -34,15 +22,7 @@
   pointer-events: none;
 }
 
-/* .section::before {
-  left: 0;
-  background: linear-gradient(90deg, #151419 15%, rgb(21 20 25 / 0%) 100%);
-}
 
-.section::after {
-  right: 0;
-  background: linear-gradient(270deg, #151419 15%, rgb(21 20 25 / 0%) 100%);
-} */
 
 .slider {
   position: relative;
@@ -91,7 +71,6 @@
   display: grid;
   place-items: center;
   text-align: center;
-  /* box-shadow: 0.063em 0.75em 1.563em rgb(0 0 0 / 65%); */
   border-radius: 1.25rem;
   overflow: hidden;
   transition:
@@ -100,19 +79,6 @@
     filter 0.6s ease;
 }
 
-/* .card::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: 1.25rem;
-  border: 0.155rem solid transparent;
-  z-index: -1;
-  -webkit-mask:
-    linear-gradient(#fff 0 0) padding-box,
-    linear-gradient(#fff 0 0);
-  -webkit-mask-composite: destination-out;
-  mask-composite: exclude;
-} */
 
 .active {
   transform: translateX(0) scale(1);

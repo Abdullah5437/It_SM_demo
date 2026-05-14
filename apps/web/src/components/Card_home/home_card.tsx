@@ -31,15 +31,7 @@ const cards: Card[] = [
     variant: "orange",
     members: ["AR", "FM", "LS"],
   },
-  // {
-  //   date: "May 1, 2021",
-  //   title: "Analytics Setup",
-  //   subtitle: "Dashboard Sync",
-  //   progress: 81,
-  //   daysLeft: "3 days left",
-  //   variant: "red",
-  //   members: ["NK", "SA", "JM"],
-  // },
+
 ];
 
 export default function HomeCard() {

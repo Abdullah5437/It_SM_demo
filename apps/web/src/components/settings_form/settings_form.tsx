@@ -1,32 +1,51 @@
 import { useState } from 'react';
 import { toast } from 'react-toastify';
-import { useAuth } from '../../contexts/AuthContext';
+// import { useAuth } from '../../contexts/AuthContext';
 import styles from "./settings_form.module.css";
+type EmailNotifications = {
+  newOrders: boolean;
+  userRegistrations: boolean;
+  systemAlerts: boolean;
+};
+
+type Settings = {
+  theme: 'light' | 'dark' | 'auto';
+  defaultView: 'dashboard' | 'products' | 'orders' | 'users';
+  itemsPerPage: number;
+  emailNotifications: EmailNotifications;
+  adminAccessLevel: 'full' | 'limited' | 'readonly';
+  sessionTimeout: number;
+  twoFactorAuth: boolean;
+  maintenanceMode: boolean;
+  debugMode: boolean;
+};
+export type DefaultView = 'dashboard' | 'products' | 'orders' | 'users';
 
 export default function SettingsForm() {
-  const { user, hasRole } = useAuth();
-  const [settings, setSettings] = useState({
-    theme: 'light',
-    defaultView: 'dashboard',
-    itemsPerPage: 10,
-    emailNotifications: {
-      newOrders: true,
-      userRegistrations: true,
-      systemAlerts: false,
-    },
-    adminAccessLevel: 'full',
-    sessionTimeout: 30,
-    twoFactorAuth: false,
-    maintenanceMode: false,
-    debugMode: false,
-  });
-
-  const handleSettingChange = (key: string, value: any) => {
-    setSettings(prev => ({
-      ...prev,
-      [key]: value
-    }));
-  };
+const [settings, setSettings] = useState<Settings>({
+  theme: 'light',
+  defaultView: 'dashboard',
+  itemsPerPage: 10,
+  emailNotifications: {
+    newOrders: true,
+    userRegistrations: true,
+    systemAlerts: false,
+  },
+  adminAccessLevel: 'full',
+  sessionTimeout: 30,
+  twoFactorAuth: false,
+  maintenanceMode: false,
+  debugMode: false,
+});
+const handleSettingChange = <K extends keyof Settings>(
+  key: K,
+  value: Settings[K]
+) => {
+  setSettings(prev => ({
+    ...prev,
+    [key]: value,
+  }));
+};
 
   const handleNotificationChange = (notification: string, checked: boolean) => {
     setSettings(prev => ({
@@ -39,20 +58,17 @@ export default function SettingsForm() {
   };
 
   const handleSave = () => {
-    // In a real app, this would save to backend
-    console.log('Saving settings:', settings);
     toast.success('Settings saved successfully!');
   };
 
-  const handleApply = () => {
-    // In a real app, this would apply system-wide changes
-    console.log('Applying changes:', settings);
-    toast.success('Changes applied successfully!');
-  };
 
-  // Only admins can see admin settings
-  const canAccessAdminSettings = hasRole('admin');
 
+const toTheme = (value: string): Settings['theme'] => {
+  if (value === 'light' || value === 'dark' || value === 'auto') {
+    return value;
+  }
+  return 'light'; // fallback safety
+};
   return (
     <div className={styles.shell}>
       <div className={styles.background}></div>
@@ -70,7 +86,9 @@ export default function SettingsForm() {
               <select
                 className={styles.selectInput}
                 value={settings.theme}
-                onChange={(e) => handleSettingChange('theme', e.target.value)}
+               onChange={(e) =>
+                handleSettingChange('theme', toTheme(e.target.value))
+              }
               >
                 <option value="light">Light Theme</option>
                 <option value="dark">Dark Theme</option>
@@ -86,7 +104,9 @@ export default function SettingsForm() {
               <select
                 className={styles.selectInput}
                 value={settings.defaultView}
-                onChange={(e) => handleSettingChange('defaultView', e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+  handleSettingChange('defaultView', e.target.value as DefaultView)
+}
               >
                 <option value="dashboard">Dashboard</option>
                 <option value="products">Products</option>
@@ -152,7 +172,7 @@ export default function SettingsForm() {
           <button className={styles.button} onClick={handleSave}>Save Settings</button>
         </div>
 
-        {canAccessAdminSettings && (
+        {/* {canAccessAdminSettings && (
           <div className={styles.container}>
             <div className={styles.sectionHeader}>
               <h3 className={styles.panelTitle}>Access Control</h3>
@@ -241,7 +261,7 @@ export default function SettingsForm() {
 
             <button className={styles.button} onClick={handleApply}>Apply Changes</button>
           </div>
-        )}
+        )} */}
       </div>
     </div>
   );

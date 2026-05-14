@@ -52,11 +52,7 @@ export default function VerticalChart() {
     fetchData();
   }, [period]);
 
-  const periodLabels: Record<Period, string> = {
-    daily: 'Products Sold Today',
-    monthly: 'Top Selling Products',
-    yearly: 'Yearly Product Sales',
-  };
+
 
   const buttonStyle = (p: Period): React.CSSProperties => ({
     padding: '0.4rem 0.9rem',

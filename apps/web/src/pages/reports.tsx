@@ -208,7 +208,7 @@ function formatCurrency(cents: number, currency = 'USD') {
 function formatNumber(n: number) {
   return new Intl.NumberFormat('en-US').format(n);
 }
-
+type Tone = 'active' | 'warning' | 'accent' | 'inactive';
 // ─── Component ────────────────────────────────────────────
 export default function ReportsPage() {
   // ── Data state ──
@@ -346,35 +346,90 @@ export default function ReportsPage() {
   }).length;
 
   // ── Invoice/order rows for DataTable ──
-  const invoiceRows = invoices.map(inv => {
-    const invNo = inv.invoiceNo || `INV-${inv._id.slice(-6)}`;
-    return {
-      id: `inv-${inv._id}`,
-      cells: [
-        { type: 'checkbox' as const, label: `Select ${invNo}` },
-        { type: 'pill' as const, text: `#${invNo}` },
-        { type: 'member' as const, title: `Invoice ${invNo}`, subtitle: inv.clientName ? `Client: ${inv.clientName}` : 'N/A' },
-        { type: 'stack' as const, title: inv.createdAt ? new Date(inv.createdAt).toLocaleDateString() : 'N/A', subtitle: inv.dueDate ? `Due: ${new Date(inv.dueDate).toLocaleDateString()}` : '' },
-        { type: 'status' as const, label: inv.status || 'pending', tone: (inv.status === 'paid' ? 'active' : inv.status === 'overdue' ? 'warning' : 'accent') as any },
-        { type: 'action' as const, label: `Actions for ${invNo}`, onEdit: () => window.alert(`View invoice ${invNo}`), onDelete: () => {} },
-      ],
-    };
-  });
+ const invoiceRows = invoices.map(inv => {
+  const invNo = inv.invoiceNo || `INV-${inv._id.slice(-6)}`;
 
-  const orderRows = orders.map(o => {
-    const orderNo = o.orderNo || `ORD-${o._id.slice(-6)}`;
-    return {
-      id: `ord-${o._id}`,
-      cells: [
-        { type: 'checkbox' as const, label: `Select ${orderNo}` },
-        { type: 'pill' as const, text: `#${orderNo}` },
-        { type: 'member' as const, title: `Order ${orderNo}`, subtitle: o.clientName ? `Client: ${o.clientName}` : 'N/A' },
-        { type: 'stack' as const, title: o.createdAt ? new Date(o.createdAt).toLocaleDateString() : 'N/A', subtitle: o.status || '' },
-        { type: 'status' as const, label: o.status || 'pending', tone: (o.status === 'completed' ? 'active' : o.status === 'cancelled' ? 'inactive' : 'warning') as any },
-        { type: 'action' as const, label: `Actions for ${orderNo}`, onEdit: () => window.alert(`View order ${orderNo}`), onDelete: () => {} },
-      ],
-    };
-  });
+  const tone: Tone =
+    inv.status === 'paid'
+      ? 'active'
+      : inv.status === 'overdue'
+      ? 'warning'
+      : 'accent';
+
+  return {
+    id: `inv-${inv._id}`,
+    cells: [
+      { type: 'checkbox' as const, label: `Select ${invNo}` },
+      { type: 'pill' as const, text: `#${invNo}` },
+      {
+        type: 'member' as const,
+        title: `Invoice ${invNo}`,
+        subtitle: inv.clientName ? `Client: ${inv.clientName}` : 'N/A',
+      },
+      {
+        type: 'stack' as const,
+        title: inv.createdAt
+          ? new Date(inv.createdAt).toLocaleDateString()
+          : 'N/A',
+        subtitle: inv.dueDate
+          ? `Due: ${new Date(inv.dueDate).toLocaleDateString()}`
+          : '',
+      },
+      {
+        type: 'status' as const,
+        label: inv.status || 'pending',
+        tone,
+      },
+      {
+        type: 'action' as const,
+        label: `Actions for ${invNo}`,
+        onEdit: () => window.alert(`View invoice ${invNo}`),
+        onDelete: () => {},
+      },
+    ],
+  };
+});
+const orderRows = orders.map(o => {
+  const orderNo = o.orderNo || `ORD-${o._id.slice(-6)}`;
+
+  const tone: Tone =
+    o.status === 'completed'
+      ? 'active'
+      : o.status === 'cancelled'
+      ? 'inactive'
+      : 'warning';
+
+  return {
+    id: `ord-${o._id}`,
+    cells: [
+      { type: 'checkbox' as const, label: `Select ${orderNo}` },
+      { type: 'pill' as const, text: `#${orderNo}` },
+      {
+        type: 'member' as const,
+        title: `Order ${orderNo}`,
+        subtitle: o.clientName ? `Client: ${o.clientName}` : 'N/A',
+      },
+      {
+        type: 'stack' as const,
+        title: o.createdAt
+          ? new Date(o.createdAt).toLocaleDateString()
+          : 'N/A',
+        subtitle: o.status || '',
+      },
+      {
+        type: 'status' as const,
+        label: o.status || 'pending',
+        tone,
+      },
+      {
+        type: 'action' as const,
+        label: `Actions for ${orderNo}`,
+        onEdit: () => window.alert(`View order ${orderNo}`),
+        onDelete: () => {},
+      },
+    ],
+  };
+});
 
   const reportRows = [...invoiceRows, ...orderRows];
   const totalCount = invoices.length + orders.length;

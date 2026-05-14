@@ -21,6 +21,14 @@ type LoginResponse = {
     expiresIn: number;
   };
 };
+export type UserRole =
+  | 'admin'
+  | 'user'
+  | 'support'
+  | 'sales'
+  | 'accounts';
+
+export type UserStatus = 'active' | 'inactive' | 'suspended';
 
 export default function LoginForm() {
   const { login } = useAuth();
@@ -55,25 +63,32 @@ export default function LoginForm() {
         throw new Error(message || 'Invalid credentials');
       }
 
-      // ✅ FIX: extract nested data from api response wrapper
       const json = (await res.json()) as { data: LoginResponse };
       const { user, tokens } = json.data;
-    console.log('Login successful:', user, tokens);
-      // map api response shape to what AuthContext expects
+      const isUserStatus = (status: string): status is UserStatus => {
+  return ['active', 'inactive', 'suspended'].includes(status);
+};
+      
       login({
         user: {
           id: user.id,
           email: user.email,
           name: user.name || '',
-          roles: user.roles as any,
-          status: user.status as any,
+         roles: (user.roles ?? []).filter((r): r is UserRole =>
+      ['admin', 'user', 'support', 'sales', 'accounts'].includes(r)
+    ),
+        status:isUserStatus(user.status) ? user.status : 'inactive',
         },
         token: tokens.accessToken,
       });
       router.push('/dashboard');
-    } catch (err: any) {
-      setError(err.message || 'Login failed');
-    } finally {
+    } catch (err: unknown) {
+  if (err instanceof Error) {
+    setError(err.message);
+  } else {
+    setError('Login failed');
+  }
+}finally {
       setLoading(false);
     }
   };
@@ -100,7 +115,9 @@ export default function LoginForm() {
                 type="email"
                 placeholder="you@example.com"
                 value={email}
-                onChange={(e:any) => setEmail(e.target.value)}
+               onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+  setEmail(e.target.value)
+}
                 required
               />
             </div>
@@ -113,7 +130,9 @@ export default function LoginForm() {
                 type="password"
                 placeholder="••••••••"
                 value={password}
-                onChange={(e:any) => setPassword(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+  setPassword(e.target.value)
+}
                 required
               />
             </div>

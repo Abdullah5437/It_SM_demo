@@ -10,24 +10,8 @@ interface ProductItem {
   defaultSalePrice: number;
 }
 
-interface ServicePlanItem {
-  _id: string;
-  name: string;
-  price?: number;
-}
 
-interface OrderLine {
-  lineNo: number;
-  itemType: 'product' | 'service' | 'addon' | 'other';
-  description: string;
-  qty: string;
-  unitPrice: string;
-  taxRate: string;
-  lineTotal: number;
-  productId?: string;
-  servicePlanId?: string;
-  serviceAddonId?: string;
-}
+
 
 interface EditOrder {
   _id: string;
@@ -61,7 +45,6 @@ export default function OrderForm({
   onSuccess,
 }: OrderFormProps) {
   const [products, setProducts] = useState<ProductItem[]>([]);
-  const [servicePlans, setServicePlans] = useState<ServicePlanItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
@@ -127,7 +110,7 @@ export default function OrderForm({
 
   const fetchData = useCallback(async () => {
     try {
-      const [productsRes, servicesRes] = await Promise.all([
+      const [productsRes] = await Promise.all([
         window.fetch('http://localhost:4000/api/v1/inventory/products', {
           headers,
         }),
@@ -137,15 +120,11 @@ export default function OrderForm({
       ]);
 
       const productsJson = await productsRes.json();
-      const servicesJson = await servicesRes.json();
 
       if (productsJson.success) {
         setProducts(productsJson.data || []);
       }
 
-      if (servicesJson.success) {
-        setServicePlans(servicesJson.data || []);
-      }
     } catch (_err) {
       toast.error('Failed to load form data');
     } finally {

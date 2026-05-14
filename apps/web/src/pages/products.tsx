@@ -22,14 +22,19 @@ interface Product {
   status: string;
   createdAt: string;
 }
+type ProductStatus = 'active' | 'inactive' | 'suspended';
+
+type EditProduct = Omit<Product, 'status'> & {
+  status: ProductStatus;
+};
 
 export default (() => {
   const [view, setView] = useState<'table' | 'create' | 'edit'>('table');
-  const [editProduct, setEditProduct] = useState<Product | null>(null);
+  const [editProduct, setEditProduct] = useState<EditProduct | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
   const handleEdit = useCallback((product: Product) => {
-    setEditProduct(product);
+    setEditProduct(product as EditProduct);
     setView('edit');
   }, []);
 

@@ -25,7 +25,9 @@ function isPositive(value: number): boolean {
   return value >= 0;
 }
 
-export default function StatsCards(): JSX.Element {
+import React from 'react';
+
+export default function StatsCards(): React.ReactElement {
   const [stats, setStats] = useState<OrderStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);

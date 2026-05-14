@@ -3,6 +3,7 @@ import { toast } from 'react-toastify';
 import styles from "./form.module.css";
 import LoaderPulse from '../Loader/Loader';
 
+type ProductStatus = 'active' | 'inactive' | 'suspended';
 interface SubSubcategoryItem {
   name: string;
   description?: string;
@@ -29,7 +30,60 @@ interface EditProductVariant {
   salePrice?: number;
   costPrice?: number;
 }
+type VariantForm = {
+  name: string;
+  sku: string;
+  stock: string;
+  salePrice: string;
+  costPrice: string;
+};
 
+
+type ProductFormState = {
+  sku: string;
+  name: string;
+  title: string;
+  description: string;
+  category: string;
+  subcategory: string;
+  subsubcategory: string;
+  image: File | null;
+  imageUrl: string;
+  defaultSalePrice: string;
+  defaultCost: string;
+  currency: string;
+  trackInventory: boolean;
+  trackSerial: boolean;
+  stock: string;
+  type: string;
+  variants: VariantForm[];
+};
+type ProductPayload = {
+  sku: string;
+  name: string;
+  title?: string;
+  description?: string;
+  image?: string;
+  type: string;
+  category?: string;
+  subcategory?: string;
+  subsubcategory?: string;
+  defaultSalePrice: number;
+  defaultCost: number;
+  currency: string;
+  trackInventory: boolean;
+  trackSerial: boolean;
+  stock: number;
+  variants: {
+    name: string;
+    sku?: string;
+    stock: number;
+    salePrice: number;
+    costPrice: number;
+  }[];
+
+  status: ProductStatus;
+};
 interface EditProduct {
   _id: string;
   sku: string;
@@ -45,7 +99,7 @@ interface EditProduct {
   defaultCost: number;
   currency: string;
   stock: number;
-  status: string;
+  status: ProductStatus;
   variants?: EditProductVariant[];
 }
 
@@ -53,7 +107,6 @@ interface ProductFormProps {
   editProduct?: EditProduct | null;
   onSuccess?: () => void;
 }
-
 export default function ProductForm({ editProduct, onSuccess }: ProductFormProps) {
   const [categories, setCategories] = useState<CategoryItem[]>([]);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
@@ -168,18 +221,25 @@ export default function ProductForm({ editProduct, onSuccess }: ProductFormProps
       const avgCost = totalStock > 0 ? Math.round((totalCostCalc / totalStock) * 100) / 100 : 0;
       const avgSale = totalStock > 0 ? Math.round((totalSaleCalc / totalStock) * 100) / 100 : 0;
 
-      setFormData(prev => {
-        const newData: any = { ...prev, stock: String(totalStock) };
+    setFormData(prev => {
+  const newData: ProductFormState = {
+    ...prev,
+    stock: String(totalStock),
+  };
 
-        // Only auto-fill if the user hasn't manually set them AND variants have values
-        const hasAnyCost = formData.variants.some(v => Number(v.costPrice) > 0);
-        const hasAnySale = formData.variants.some(v => Number(v.salePrice) > 0);
+  const hasAnyCost = prev.variants.some(v => Number(v.costPrice) > 0);
+  const hasAnySale = prev.variants.some(v => Number(v.salePrice) > 0);
 
-        if (hasAnyCost) newData.defaultCost = String(avgCost);
-        if (hasAnySale) newData.defaultSalePrice = String(avgSale);
+  if (hasAnyCost) {
+    newData.defaultCost = String(avgCost);
+  }
 
-        return newData;
-      });
+  if (hasAnySale) {
+    newData.defaultSalePrice = String(avgSale);
+  }
+
+  return newData;
+});
     }
   }, [formData.variants]);
 
@@ -218,21 +278,28 @@ export default function ProductForm({ editProduct, onSuccess }: ProductFormProps
     return json.data.url;
   };
 
-  const handleInputChange = (e: any) => {
-    const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
-  };
+const handleInputChange = (
+  e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+) => {
+  const target = e.target;
 
-  const handleFileChange = (e: any) => {
-    setFormData(prev => ({
-      ...prev,
-      image: e.target.files?.[0] || null,
-      imageUrl: '',
-    }));
-  };
+  const { name, value } = target;
+
+  const isCheckbox = target instanceof HTMLInputElement && target.type === 'checkbox';
+
+  setFormData(prev => ({
+    ...prev,
+    [name]: isCheckbox ? target.checked : value,
+  }));
+};
+
+const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  setFormData(prev => ({
+    ...prev,
+    image: e.target.files?.[0] || null,
+    imageUrl: '',
+  }));
+};
 
   const handleCategoryChange = (value: string) => {
     setFormData(prev => ({
@@ -311,7 +378,7 @@ export default function ProductForm({ editProduct, onSuccess }: ProductFormProps
 
     const isEditing = !!editProduct?._id;
 
-    const payload = {
+  const payload: ProductPayload = {
       sku: formData.sku,
       name: formData.name,
       title: formData.title || undefined,
@@ -327,6 +394,7 @@ export default function ProductForm({ editProduct, onSuccess }: ProductFormProps
       trackInventory: formData.trackInventory,
       trackSerial: formData.trackSerial,
       stock: hasVariants ? totalVariantStock : Number(formData.stock),
+      status: 'active', 
       variants: hasVariants
         ? formData.variants
             .filter(v => v.name.trim())
@@ -341,11 +409,11 @@ export default function ProductForm({ editProduct, onSuccess }: ProductFormProps
     };
 
     // Include status only if editing (preserve existing)
-    if (isEditing && editProduct?.status) {
-      (payload as any).status = editProduct.status;
-    } else {
-      (payload as any).status = 'active';
-    }
+   if (isEditing && editProduct?.status) {
+  payload.status = editProduct.status;
+} else {
+  payload.status = 'active';
+}
 
     try {
       const url = isEditing
@@ -594,21 +662,21 @@ export default function ProductForm({ editProduct, onSuccess }: ProductFormProps
                         className={styles.input}
                         placeholder="e.g. 16GB RAM / Black / i7"
                         value={variant.name}
-                        onChange={(e: any) =>
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                           handleVariantChange(index, 'name', e.target.value)
                         }
                       />
                     </div>
                     <div className={styles.formGroup}>
                       <label className={styles.label}>Variant SKU</label>
-                      <input
-                        className={styles.input}
-                        placeholder="e.g. DELL-I7"
-                        value={variant.sku}
-                        onChange={(e: any) =>
-                          handleVariantChange(index, 'sku', e.target.value)
-                        }
-                      />
+                     <input
+                      className={styles.input}
+                      placeholder="e.g. DELL-I7"
+                      value={variant.sku}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        handleVariantChange(index, 'sku', e.target.value)
+                      }
+                    />
                     </div>
                   </div>
 
@@ -616,28 +684,28 @@ export default function ProductForm({ editProduct, onSuccess }: ProductFormProps
                     <div className={styles.formGroup}>
                       <label className={styles.label}>Stock</label>
                       <input
-                        type="number"
-                        className={styles.input}
-                        placeholder="0"
-                        value={variant.stock}
-                        onChange={(e: any) =>
-                          handleVariantChange(index, 'stock', e.target.value)
-                        }
-                      />
+                          type="number"
+                          className={styles.input}
+                          placeholder="0"
+                          value={variant.stock}
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                            handleVariantChange(index, 'stock', e.target.value)
+                          }
+                        />
                     </div>
                     <div className={styles.formGroup}>
                       <label className={styles.label}>Sale Price ($)</label>
                       <input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        className={styles.input}
-                        placeholder="999.99"
-                        value={variant.salePrice}
-                        onChange={(e: any) =>
-                          handleVariantChange(index, 'salePrice', e.target.value)
-                        }
-                      />
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          className={styles.input}
+                          placeholder="999.99"
+                          value={variant.salePrice}
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                            handleVariantChange(index, 'salePrice', e.target.value)
+                          }
+                        />
                     </div>
                     <div className={styles.formGroup}>
                       <label className={styles.label}>Cost Price ($)</label>
@@ -648,7 +716,7 @@ export default function ProductForm({ editProduct, onSuccess }: ProductFormProps
                         className={styles.input}
                         placeholder="600.00"
                         value={variant.costPrice}
-                        onChange={(e: any) =>
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                           handleVariantChange(index, 'costPrice', e.target.value)
                         }
                       />
@@ -709,14 +777,14 @@ export default function ProductForm({ editProduct, onSuccess }: ProductFormProps
               <label className={styles.label}>Category *</label>
               <div className={styles.selectWrapper}>
                 <select 
-                  className={styles.selectInput}
-                  value={formData.category}
-                  onChange={(e: any) =>
-                    handleCategoryChange(e.target.value)
-                  }
-                  required
-                  disabled={!formData.type}
-                >
+              className={styles.selectInput}
+              value={formData.category}
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                handleCategoryChange(e.target.value)
+              }
+              required
+              disabled={!formData.type}
+              >
                   <option value="">Select Category</option>
                   {filteredCategories.map(cat => (
                     <option key={cat._id} value={cat._id}>{cat.name}</option>
@@ -730,12 +798,14 @@ export default function ProductForm({ editProduct, onSuccess }: ProductFormProps
               <label className={styles.label}>Subcategory *</label>
               <div className={styles.selectWrapper}>
                 <select 
-                  className={styles.selectInput}
-                  value={formData.subcategory}
-                  onChange={(e: any) => handleSubcategoryChange(e.target.value)}
-                  required
-                  disabled={!formData.category || availableSubcategories.length === 0}
-                >
+                 className={styles.selectInput}
+                 value={formData.subcategory}
+                 onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                 handleSubcategoryChange(e.target.value)
+                 }
+                 required
+                 disabled={!formData.category || availableSubcategories.length === 0}
+                 >
                   <option value="">Select Subcategory</option>
                   {availableSubcategories.map((sub, i) => (
                     <option key={i} value={sub.name}>{sub.name}</option>

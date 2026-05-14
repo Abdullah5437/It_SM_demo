@@ -10,11 +10,7 @@
   background:
     linear-gradient(rgba(5, 10, 24, 0.88), rgba(5, 10, 24, 0.9)),
     linear-gradient(135deg, #071120 0%, #0d1b3d 35%, #0d5c63 68%, #31c7b7 100%);
-  /* border: 1px solid rgb(111 247 255 / 0.22); */
-  /* box-shadow:
-    0 22px 60px rgb(6 12 24 / 0.38),
-    inset 0 1px 0 rgb(255 255 255 / 0.1),
-    inset 0 0 40px rgb(38 255 233 / 0.08); */
+
   overflow: hidden;
 }
 
@@ -25,20 +21,7 @@
   pointer-events: none;
 }
 
-/* .banner::before {
-  inset: 0;
-  background:
-    linear-gradient(90deg, transparent 0%, rgb(90 255 244 / 0.08) 50%, transparent 100%),
-    repeating-linear-gradient(
-      180deg,
-      rgb(255 255 255 / 0.04) 0 1px,
-      transparent 1px 22px
-    );
-  mix-blend-mode: screen;
-  opacity: 0.65;
-  background-size: 220px 100%, 100% 22px;
-  animation: dataFlow 9s linear infinite;
-} */
+
 
 .banner::after {
   width: 14rem;
@@ -55,20 +38,7 @@
   position: relative;
   z-index: 1;
 }
-/* 
-.content::before {
-  content: "";
-  position: absolute;
-  left: -3rem;
-  right: -2rem;
-  top: 50%;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgb(73 201 255 / 0.65), transparent);
-  opacity: 0.5;
-  transform: translateY(-50%);
-  animation: sweepLine 4.5s linear infinite;
-  pointer-events: none;
-} */
+
 
 .content h1 {
   margin: 0;
@@ -110,13 +80,7 @@
     box-shadow 0.3s ease;
 }
 
-/* .button::after {
-  content: "";
-  position: absolute;
-  inset: 3px;
-  border: 1px solid rgb(5 17 29 / 0.12);
-  border-radius: 7px;
-} */
+
 
 .button:hover {
   transform: translateY(-1px);

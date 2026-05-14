@@ -1,3 +1,4 @@
+import React from 'react';
 import styles from './sidebar.module.css';
 import Link from 'next/link';
 import { useAuth, UserRole } from '../../contexts/AuthContext';
@@ -75,7 +76,7 @@ const ReportsIcon  =()=>{
 }
 
 
-const iconMap: Record<IconType, JSX.Element> = {
+const iconMap: Record<IconType, React.ReactNode> = {
   dashboard: <DashboardIcon />,
   users: <UsersIcon />,
   orders: <OrdersIcon />,

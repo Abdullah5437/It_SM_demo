@@ -169,7 +169,6 @@ function renderCell(cell: DataTableCell) {
 }
 
 export default function Table({
-  kicker = 'Data Table',
   heading = 'Overview',
   meta,
   columns = defaultColumns,
