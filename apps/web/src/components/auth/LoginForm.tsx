@@ -126,13 +126,12 @@ export default function LoginForm() {
             )}
 
             <button
-              className={styles.button}
-              type="submit"
-              disabled={loading}
-              onClick={handleLogin}
-            >
-              {loading ? 'Logging in...' : 'Login'}
-            </button>
+  className={styles.button}
+  type="submit"
+  disabled={loading}
+>
+  {loading ? 'Logging in...' : 'Login'}
+</button>
           </form>
         </div>
       </div>
