@@ -1,0 +1,145 @@
+/* Remove @import in modules — include fonts/icons in _app.js or layout instead */
+
+/* Sidebar container */
+.mainMenu {
+  background:
+    linear-gradient(rgba(5, 10, 24, 0.88), rgba(5, 10, 24, 0.9)),
+    linear-gradient(135deg, #071120 0%, #0d1b3d 35%, #0d5c63 68%, #31c7b7 100%);
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 60px;
+  height: 100vh;
+  overflow: hidden;
+  transition: width 0.2s ease;
+  z-index: 1000;
+  padding-top: 50px;
+}
+
+/* Expand on hover */
+.mainMenu:hover {
+  width: 250px;
+  overflow: visible;
+}
+
+/* UL reset */
+.menuList {
+  margin: 7px 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Each item */
+.menuItem {
+  position: relative;
+  display: block;
+  width: 250px;
+  margin-bottom: 15px;
+}
+
+/* Links */
+.menuLink {
+  display: table;
+  width: 100%;
+  color: #999;
+  font-size: 14px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+/* Icon */
+.icon {
+  display: table-cell;
+  width: 60px;
+  height: 36px;
+  text-align: center;
+  vertical-align: middle;
+  font-size: 20px;
+  color: inherit;
+}
+
+.icon svg {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/* Text */
+.navText {
+  display: table-cell;
+  vertical-align: middle;
+  width: 190px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  white-space: nowrap;
+}
+
+/* Show text on hover */
+.mainMenu:hover .navText {
+  opacity: 1;
+}
+
+/* Hover state */
+.menuItem:hover .menuLink {
+  color: #fff;
+  background-color: #31c7b7;
+}
+
+/* User section */
+.userSection {
+  position: absolute;
+  bottom: 60px;
+  left: 0;
+  right: 0;
+  padding: 15px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.userInfo {
+  margin-bottom: 10px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.mainMenu:hover .userInfo {
+  opacity: 1;
+}
+
+.userName {
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.userRole {
+  color: #31c7b7;
+  font-size: 12px;
+  text-transform: capitalize;
+}
+
+.logoutButton {
+  width: 100%;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  color: #fff;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.mainMenu:hover .logoutButton {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.logoutButton:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+}

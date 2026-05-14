@@ -1,0 +1,88 @@
+.selectField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #10263a;
+  margin: 0;
+}
+
+.required {
+  color: hsl(0, 79%, 56%);
+  margin-left: 0.25rem;
+}
+
+.selectWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.icon {
+  position: absolute;
+  left: 0.75rem;
+  z-index: 2;
+  color: #7bcbd0;
+  font-size: 1rem;
+}
+
+.select {
+  width: 100%;
+  padding: 0.75rem 2.5rem 0.75rem 1rem;
+  border: 1px solid rgb(13 92 99 / 0.12);
+  border-radius: 0.5rem;
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.875rem;
+  color: #10263a;
+  background-color: #ffffff;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  outline: none;
+  appearance: none;
+}
+
+.select:focus {
+  border-color: #31c7b7;
+  box-shadow: 0 0 0 3px rgb(49 199 183 / 0.16);
+}
+
+.select--with-icon {
+  padding-left: 2.5rem;
+}
+
+.select--error {
+  border-color: hsl(0, 79%, 56%);
+}
+
+.select--error:focus {
+  border-color: hsl(0, 79%, 56%);
+  box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
+}
+
+.select--disabled {
+  background-color: #eef8f9;
+  color: #5b7c84;
+  cursor: not-allowed;
+}
+
+.arrow {
+  position: absolute;
+  right: 0.75rem;
+  pointer-events: none;
+  color: #7bcbd0;
+  transition: color 0.2s ease;
+}
+
+.select:focus + .arrow {
+  color: #31c7b7;
+}
+
+.error {
+  font-size: 0.75rem;
+  color: hsl(0, 79%, 56%);
+  margin: 0;
+}

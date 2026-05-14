@@ -1,0 +1,96 @@
+.wrapper{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.paginationInfo{
+  font-size: 14px;
+  color: #6b7280;
+}
+.container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px 0;
+  border-top: 1px solid #f3f4f6;
+  margin-top: 16px;
+}
+
+.number {
+  min-width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  color: #374151;
+  font-size: 14px;
+  font-weight: 500;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.number:hover {
+  background: #f9fafb;
+  border-color: #d1d5db;
+}
+
+.active {
+  background: #3b82f6;
+  color: #fff;
+  border-color: #3b82f6;
+}
+
+.active:hover {
+  background: #2563eb;
+  border-color: #2563eb;
+}
+
+.arrow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  color: #374151;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.arrow:hover:not(:disabled) {
+  background: #f9fafb;
+  border-color: #d1d5db;
+}
+
+.arrow:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.arrowIcon {
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.arrowText {
+  font-size: 14px;
+}
+
+.ellipsis {
+  padding: 0 8px;
+  color: #9ca3af;
+  font-size: 14px;
+}
+
+.hide {
+  display: none;
+}

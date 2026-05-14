@@ -1,0 +1,59 @@
+# Node.js
+node_modules/
+dist/
+build/
+coverage/
+.nyc_output
+
+# Environment files
+.env
+.env.local
+.env.test
+.env.production
+.env.*.local
+
+# Logs
+*.log
+yarn-error.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Editor directories and files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+ehthumbs.db
+
+# TypeScript
+*.tsbuildinfo
+
+# Next.js
+.next/
+.vercel/
+
+# Svelte
+.svelte-kit/
+
+# Storybook
+storybook-static/
+
+# TurboRepo
+.turbo/
+
+# Parcel
+.parcel-cache/
+
+# Husky (committed for team hooks)
+
+# Yarn
+.yarn/
+
+# npm
+# Keep package-lock.json committed for reproducible installs
+
+# Misc
+.eslintcache

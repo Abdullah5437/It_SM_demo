@@ -1,0 +1,50 @@
+{
+  "name": "@i-itsm/api",
+  "version": "0.1.0",
+  "private": true,
+  "description": "I-ITSM Backend API (Express + MongoDB + BullMQ)",
+  "scripts": {
+    "dev": "tsx watch src/main.ts",
+    "build": "tsc",
+    "start": "node dist/main.js",
+    "test": "jest --runInBand",
+    "test:watch": "jest --watch --runInBand",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix",
+    "db:seed": "tsx src/db/seed.ts"
+  },
+  "dependencies": {
+    "@i-itsm/shared": "*",
+    "bcryptjs": "^2.4.3",
+    "bullmq": "^5.0.0",
+    "cloudinary": "^2.10.0",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.0.0",
+    "multer": "^2.1.1",
+    "node-cron": "^3.0.3",
+    "pino": "^8.17.0",
+    "pino-http": "^8.6.0",
+    "redis": "^4.6.0",
+    "zod": "^3.22.0"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.4",
+    "@types/express": "^4.17.20",
+    "@types/jest": "^29.5.8",
+    "@types/jsonwebtoken": "^9.0.5",
+    "@types/multer": "^2.1.0",
+    "@types/node": "^20.10.0",
+    "@types/node-cron": "^3.0.11",
+    "@types/supertest": "^2.0.12",
+    "@typescript-eslint/eslint-plugin": "^6.13.0",
+    "eslint": "^8.54.0",
+    "jest": "^29.7.0",
+    "mongodb-memory-server": "^10.1.4",
+    "supertest": "^6.3.3",
+    "ts-jest": "^29.1.1",
+    "tsx": "^4.6.2",
+    "typescript": "^5.3.3"
+  }
+}

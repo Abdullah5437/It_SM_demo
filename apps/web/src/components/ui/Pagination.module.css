@@ -1,0 +1,92 @@
+.paginationWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 0 0 12px 12px;
+}
+
+.itemsPerPage {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: #98a2b3;
+}
+
+.perPageSelect {
+  padding: 0.35rem 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  color: #e4e7ec;
+  font-size: 0.85rem;
+  cursor: pointer;
+  outline: none;
+}
+
+.perPageSelect:focus {
+  border-color: #0d5c63;
+}
+
+.pageInfo {
+  font-size: 0.85rem;
+  color: #98a2b3;
+  white-space: nowrap;
+}
+
+.pageButtons {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.pageBtn {
+  min-width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0.4rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  background: transparent;
+  color: #c4c7cf;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.pageBtn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.08);
+  color: #e4e7ec;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.pageBtn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.activePage {
+  background: #0d5c63;
+  border-color: #0d5c63;
+  color: #fff;
+  font-weight: 600;
+}
+
+.activePage:hover:not(:disabled) {
+  background: #0b4d54;
+  border-color: #0b4d54;
+  color: #fff;
+}
+
+.ellipsis {
+  padding: 0 0.25rem;
+  color: #667085;
+  font-size: 0.8rem;
+}

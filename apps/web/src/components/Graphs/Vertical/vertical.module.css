@@ -1,0 +1,83 @@
+.chartWrapper {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem 2rem;
+  border-radius: 16px;
+  max-width: 440px;
+}
+
+.donut {
+  width: 260px;
+  height: 260px;
+  border-radius: 50%;
+  position: relative;
+  flex-shrink: 0;
+}
+
+/* Inner hole with total */
+.donutCenter {
+  position: absolute;
+  inset: 50%;
+  transform: translate(-50%, -50%);
+  width: 120px;
+  height: 120px;
+  background: white;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+}
+
+.donutTotal {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1f2937;
+  line-height: 1;
+}
+
+.donutLabel {
+  font-size: 0.7rem;
+  color: #6b7280;
+  text-align: center;
+  line-height: 1.2;
+}
+
+/* Legend styles */
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  justify-content: center;
+}
+
+.legendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.75rem;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 999px;
+  font-size: 0.78rem;
+}
+
+.legendDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.legendLabel {
+  color: #374151;
+  font-weight: 500;
+}
+
+.legendValue {
+  color: #6b7280;
+  font-weight: 400;
+}

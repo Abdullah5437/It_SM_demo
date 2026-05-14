@@ -1,0 +1,34 @@
+.shell {
+  min-height: 100vh;
+  background: #f5f7fa;
+  font-family: 'Calibri', sans-serif;
+}
+
+.content {
+  margin-left: 60px;
+  min-height: 100vh;
+  padding: 24px;
+}
+
+.inner {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.pageContent {
+  min-width: 0;
+}
+
+@media (max-width: 768px) {
+  .content {
+    padding: 16px;
+  }
+
+  .inner {
+    gap: 16px;
+  }
+}

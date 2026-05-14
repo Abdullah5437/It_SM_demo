@@ -1,0 +1,28 @@
+{
+  "name": "@i-itsm/web",
+  "version": "0.1.0",
+  "private": true,
+  "description": "I-ITSM Frontend (React/Next.js)",
+  "scripts": {
+    "dev": "next dev --turbo",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint src --ext .ts,.tsx",
+    "lint:fix": "eslint src --ext .ts,.tsx --fix"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "next": "^14.0.0",
+    "zod": "^3.22.0",
+    "axios": "^1.6.0",
+    "@i-itsm/shared": "*"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.0",
+    "@types/node": "^20.10.0",
+    "typescript": "^5.3.3",
+    "eslint": "^8.54.0",
+    "@typescript-eslint/eslint-plugin": "^6.13.0"
+  }
+}

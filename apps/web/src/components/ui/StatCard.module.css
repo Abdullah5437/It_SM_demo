@@ -1,0 +1,70 @@
+.container {
+  display: flex;
+  gap: 20px;
+  border-radius: 10px;
+  width: 90%;
+}
+
+.card {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background:
+    linear-gradient(180deg, #ffffff 0%, #f4fbfc 100%);
+  padding: 20px;
+  border-radius: 14px;
+  border: 1px solid rgb(13 92 99 / 0.1);
+  box-shadow: 0 14px 28px rgb(6 12 24 / 0.08);
+
+}
+
+.iconBox {
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  margin-right: 12px;
+}
+
+.green {
+  background: rgba(83, 234, 83, 0.405);
+  color: #d8fffb;
+}
+
+.red {
+  background: rgba(239, 99, 99, 0.405);
+  color: #ddf6ff;
+}
+
+.content {
+  flex: 1;
+}
+
+.value {
+  font-size: 22px;
+  font-weight: 600;
+  color: #10263a;
+  margin: 0;
+}
+
+.label {
+  font-size: 16px;
+  color: #4f7a83;
+  margin: 2px 0 0;
+}
+
+.change {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.textGreen {
+  color: #16a34a;
+}
+
+.textRed {
+  color: #dc2626;
+}
