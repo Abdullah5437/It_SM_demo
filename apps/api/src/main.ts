@@ -3,9 +3,9 @@ import 'dotenv/config';
 import pinoHttp from 'pino-http';
 import { env, validateEnv } from './config/env';
 import { connectDatabase, disconnectDatabase } from './config/db';
-import { connectRedis, disconnectRedis } from './config/redis';
+// import { connectRedis, disconnectRedis } from './config/redis';
 import {
-  authenticate,
+  // authenticate,
   auditLogger,
   errorHandler,
 } from './middlewares';
@@ -26,7 +26,7 @@ import usersRoutes from './modules/users/routes';
 import uploadRoutes from './modules/upload/upload.routes';
 import { settingsRoutes } from './modules/settings/settings.routes';
 import { getQueueHealth, closeQueues } from './jobs/queues';
-import { startWorkers, stopWorkers } from './jobs/workers';
+// import { startWorkers, stopWorkers } from './jobs/workers';
 import cors from 'cors';
 
 /**

@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import {
   Card,
   InputField,
-  DataTable,
   ChartCard,
   SelectField,
   SelectOption,
@@ -11,7 +10,6 @@ import styles from './AdminDashboard.module.css';
 import statStyles from '../components/ui/StatCard.module.css';
 import Task from '../components/Task/task';
 import StatsCards from '../components/ui/StatCard';
-import Timeline from '../components/TimeLine/timeline';
 import HomeCard from '../components/Card_home/home_card';
 import Horizontal from '../components/Graphs/Horizontal/horizontal';
 import Vertical from '../components/Graphs/Vertical/vertical';
@@ -39,7 +37,7 @@ export default function AdminDashboard() {
         {/* Users Table */}
         <Card className={styles.tableCard}>
           <div className={styles.tableHeader}>
-            <h2 className={styles.sectionTitle}>Users Management</h2>
+            {/* <h2 className={styles.sectionTitle}>Users Management</h2> */}
             <div className={styles.filters}>
               <InputField
                 placeholder="Search users..."
@@ -62,14 +60,14 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          <DataTable
+          {/* <DataTable
             autoFetchUsers
             kicker="User Management"
             heading="Current user overview"
             meta={['Live users', 'API Connected']}
-          />
+          /> */}
  
-          <Timeline/>
+          {/* <Timeline/> */}
           <div style={{display:"flex",justifyContent:"space-between",marginTop:"1.5rem",gap:"2rem"}}>
        <Horizontal/>
         <Vertical/>

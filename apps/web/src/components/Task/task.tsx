@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import styles from "./task.module.css";
+import Notifications from './../notifications/notifications'
 
 type Slide = {
   title: string;
@@ -162,7 +163,7 @@ export default function Task() {
     </div>
     <div className={styles.tagContainer}>
       <p className={styles.tagTitle}>Tags</p>
-     
+      <Notifications/>
     </div>
     
     </>

@@ -262,8 +262,8 @@ export default function Table({
                 );
 
                 fetchUsers();
-              } catch (error) {
-                console.error('Delete failed:', error);
+              } catch {
+                // silent
               }
             },
           },
@@ -271,8 +271,8 @@ export default function Table({
       }));
 
       setInternalRows(mappedRows);
-    } catch (error) {
-      console.error('Failed to fetch users:', error);
+    } catch {
+      // silent
     } finally {
       setLoading(false);
     }

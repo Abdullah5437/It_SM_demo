@@ -28,9 +28,8 @@ interface OrderItem {
   currency?: string;
 }
 
-interface ProductVariant {
+interface ProductSize {
   name: string;
-  sku?: string;
   stock: number;
   salePrice?: number;
   costPrice?: number;
@@ -41,14 +40,12 @@ interface Product {
   sku: string;
   name: string;
   type: string;
-  category?: string;
-  subcategory?: string;
   defaultSalePrice: number;
   defaultCost: number;
   currency: string;
   stock: number;
   status: string;
-  variants: ProductVariant[];
+  sizes: ProductSize[];
 }
 
 interface MonthlySales {
@@ -201,14 +198,14 @@ const S: Record<string, React.CSSProperties> = {
 };
 
 // ─── Helpers ──────────────────────────────────────────────
-function formatCurrency(cents: number, currency = 'USD') {
+function formatCurrency(cents: number, currency = 'PKR') {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency, minimumFractionDigits: 2 }).format(cents / 100);
 }
 
 function formatNumber(n: number) {
   return new Intl.NumberFormat('en-US').format(n);
 }
-type Tone = 'active' | 'warning' | 'accent' | 'inactive';
+
 // ─── Component ────────────────────────────────────────────
 export default function ReportsPage() {
   // ── Data state ──
@@ -301,8 +298,8 @@ export default function ReportsPage() {
     if (stockType && p.type !== stockType) return false;
     if (stockStatus && p.status !== stockStatus) return false;
     if (lowStockOnly && p.stock > 5) {
-      const hasLowVariant = p.variants?.some(v => v.stock <= 5);
-      if (p.stock > 5 && !hasLowVariant) return false;
+      const hasLowSize = p.sizes?.some(s => s.stock <= 5);
+      if (p.stock > 5 && !hasLowSize) return false;
     }
     return true;
   });
@@ -335,101 +332,66 @@ export default function ReportsPage() {
   const grandTotalCents = monthlySales.reduce((s, m) => s + m.totalCents, 0);
   const grandTotalOrders = monthlySales.reduce((s, m) => s + m.orderCount, 0);
 
+  // Helper: compute total sale value for a product considering per-size prices
+  const productSaleValue = (p: Product) => {
+    if (p.sizes && p.sizes.length > 0) {
+      return p.sizes.reduce((sum, s) => sum + ((s.salePrice ?? p.defaultSalePrice ?? 0) * s.stock), 0);
+    }
+    return (p.defaultSalePrice || 0) * p.stock;
+  };
+  const productCostValue = (p: Product) => {
+    if (p.sizes && p.sizes.length > 0) {
+      return p.sizes.reduce((sum, s) => sum + ((s.costPrice ?? p.defaultCost ?? 0) * s.stock), 0);
+    }
+    return (p.defaultCost || 0) * p.stock;
+  };
+
   // ── Stock totals ──
   const totalProducts = products.length;
   const totalStock = products.reduce((s, p) => s + p.stock, 0);
-  const totalStockValue = products.reduce((s, p) => s + (p.defaultCost || 0) * p.stock, 0);
-  const totalSaleValue = products.reduce((s, p) => s + (p.defaultSalePrice || 0) * p.stock, 0);
+  const totalStockValue = products.reduce((s, p) => s + productCostValue(p), 0);
+  const totalSaleValue = products.reduce((s, p) => s + productSaleValue(p), 0);
   const lowStockCount = products.filter(p => {
     if (p.stock <= 5) return true;
-    return p.variants?.some(v => v.stock <= 5);
+    return p.sizes?.some(s => s.stock <= 5);
   }).length;
 
+  // ── Filtered stock totals (for table footer) ──
+  const filteredTotalStock = filteredProducts.reduce((s, p) => s + p.stock, 0);
+  const filteredTotalStockValue = filteredProducts.reduce((s, p) => s + productSaleValue(p), 0);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const filteredTotalCostValue = filteredProducts.reduce((s, p) => s + productCostValue(p), 0);
+
   // ── Invoice/order rows for DataTable ──
- const invoiceRows = invoices.map(inv => {
-  const invNo = inv.invoiceNo || `INV-${inv._id.slice(-6)}`;
+  const invoiceRows = invoices.map(inv => {
+    const invNo = inv.invoiceNo || `INV-${inv._id.slice(-6)}`;
+    return {
+      id: `inv-${inv._id}`,
+      cells: [
+        { type: 'checkbox' as const, label: `Select ${invNo}` },
+        { type: 'pill' as const, text: `#${invNo}` },
+        { type: 'member' as const, title: `Invoice ${invNo}`, subtitle: inv.clientName ? `Client: ${inv.clientName}` : 'N/A' },
+        { type: 'stack' as const, title: inv.createdAt ? new Date(inv.createdAt).toLocaleDateString() : 'N/A', subtitle: inv.dueDate ? `Due: ${new Date(inv.dueDate).toLocaleDateString()}` : '' },
+        { type: 'status' as const, label: inv.status || 'pending', tone: (inv.status === 'paid' ? 'active' : inv.status === 'overdue' ? 'warning' : 'accent') as any },
+        { type: 'action' as const, label: `Actions for ${invNo}`, onEdit: () => window.alert(`View invoice ${invNo}`), onDelete: () => {} },
+      ],
+    };
+  });
 
-  const tone: Tone =
-    inv.status === 'paid'
-      ? 'active'
-      : inv.status === 'overdue'
-      ? 'warning'
-      : 'accent';
-
-  return {
-    id: `inv-${inv._id}`,
-    cells: [
-      { type: 'checkbox' as const, label: `Select ${invNo}` },
-      { type: 'pill' as const, text: `#${invNo}` },
-      {
-        type: 'member' as const,
-        title: `Invoice ${invNo}`,
-        subtitle: inv.clientName ? `Client: ${inv.clientName}` : 'N/A',
-      },
-      {
-        type: 'stack' as const,
-        title: inv.createdAt
-          ? new Date(inv.createdAt).toLocaleDateString()
-          : 'N/A',
-        subtitle: inv.dueDate
-          ? `Due: ${new Date(inv.dueDate).toLocaleDateString()}`
-          : '',
-      },
-      {
-        type: 'status' as const,
-        label: inv.status || 'pending',
-        tone,
-      },
-      {
-        type: 'action' as const,
-        label: `Actions for ${invNo}`,
-        onEdit: () => window.alert(`View invoice ${invNo}`),
-        onDelete: () => {},
-      },
-    ],
-  };
-});
-const orderRows = orders.map(o => {
-  const orderNo = o.orderNo || `ORD-${o._id.slice(-6)}`;
-
-  const tone: Tone =
-    o.status === 'completed'
-      ? 'active'
-      : o.status === 'cancelled'
-      ? 'inactive'
-      : 'warning';
-
-  return {
-    id: `ord-${o._id}`,
-    cells: [
-      { type: 'checkbox' as const, label: `Select ${orderNo}` },
-      { type: 'pill' as const, text: `#${orderNo}` },
-      {
-        type: 'member' as const,
-        title: `Order ${orderNo}`,
-        subtitle: o.clientName ? `Client: ${o.clientName}` : 'N/A',
-      },
-      {
-        type: 'stack' as const,
-        title: o.createdAt
-          ? new Date(o.createdAt).toLocaleDateString()
-          : 'N/A',
-        subtitle: o.status || '',
-      },
-      {
-        type: 'status' as const,
-        label: o.status || 'pending',
-        tone,
-      },
-      {
-        type: 'action' as const,
-        label: `Actions for ${orderNo}`,
-        onEdit: () => window.alert(`View order ${orderNo}`),
-        onDelete: () => {},
-      },
-    ],
-  };
-});
+  const orderRows = orders.map(o => {
+    const orderNo = o.orderNo || `ORD-${o._id.slice(-6)}`;
+    return {
+      id: `ord-${o._id}`,
+      cells: [
+        { type: 'checkbox' as const, label: `Select ${orderNo}` },
+        { type: 'pill' as const, text: `#${orderNo}` },
+        { type: 'member' as const, title: `Order ${orderNo}`, subtitle: o.clientName ? `Client: ${o.clientName}` : 'N/A' },
+        { type: 'stack' as const, title: o.createdAt ? new Date(o.createdAt).toLocaleDateString() : 'N/A', subtitle: o.status || '' },
+        { type: 'status' as const, label: o.status || 'pending', tone: (o.status === 'completed' ? 'active' : o.status === 'cancelled' ? 'inactive' : 'warning') as any },
+        { type: 'action' as const, label: `Actions for ${orderNo}`, onEdit: () => window.alert(`View order ${orderNo}`), onDelete: () => {} },
+      ],
+    };
+  });
 
   const reportRows = [...invoiceRows, ...orderRows];
   const totalCount = invoices.length + orders.length;
@@ -587,47 +549,97 @@ const orderRows = orders.map(o => {
                           <th style={S.stockTh}>SKU</th>
                           <th style={S.stockTh}>Name</th>
                           <th style={S.stockTh}>Type</th>
-                          <th style={S.stockTh}>Category</th>
                           <th style={S.stockTh}>Unit Price</th>
                           <th style={S.stockTh}>Total Stock</th>
+                          <th style={S.stockTh}>Sizes / Qty</th>
                           <th style={S.stockTh}>Stock Value</th>
-                          <th style={S.stockTh}>Variants</th>
                           <th style={S.stockTh}>Status</th>
                         </tr>
                       </thead>
                       <tbody>
                         {filteredProducts.length === 0 ? (
-                          <tr><td colSpan={9} style={{ textAlign: 'center', padding: '2rem', color: '#98a2b3' }}>No products match your filters</td></tr>
+                          <tr><td colSpan={8} style={{ textAlign: 'center', padding: '2rem', color: '#98a2b3' }}>No products match your filters</td></tr>
                         ) : (
                           filteredProducts.map(p => {
                             const isLowStock = p.stock <= 5;
-                            const hasLowVariant = p.variants?.some(v => v.stock <= 5);
+                            const hasLowSize = p.sizes?.some(s => s.stock <= 5);
+                            const hasSizes = p.sizes && p.sizes.length > 0;
+
+                            // For sized products use per-size sale price and cost price
+                            const sizePriceInfo = hasSizes
+                              ? p.sizes.map(s => ({
+                                  name: s.name,
+                                  qty: s.stock,
+                                  salePrice: s.salePrice ?? p.defaultSalePrice ?? 0,
+                                  costPrice: s.costPrice ?? p.defaultCost ?? 0,
+                                  lineSaleValue: ((s.salePrice ?? p.defaultSalePrice ?? 0) * s.stock),
+                                  lineCostValue: ((s.costPrice ?? p.defaultCost ?? 0) * s.stock),
+                                }))
+                              : null;
+
+                            const sizedSaleValue = sizePriceInfo
+                              ? sizePriceInfo.reduce((sum, si) => sum + si.lineSaleValue, 0)
+                              : ((p.defaultSalePrice || 0) * p.stock);
+
+                            const sizedCostValue = sizePriceInfo
+                              ? sizePriceInfo.reduce((sum, si) => sum + si.lineCostValue, 0)
+                              : ((p.defaultCost || 0) * p.stock);
                             return (
                               <tr key={p._id}>
                                 <td style={S.stockTd}><span style={{ fontFamily: 'monospace', fontSize: '0.8rem' }}>{p.sku}</span></td>
                                 <td style={S.stockTd}><strong>{p.name}</strong></td>
                                 <td style={S.stockTd}>{p.type}</td>
-                                <td style={S.stockTd}>{p.category || '-'}{p.subcategory ? ` → ${p.subcategory}` : ''}</td>
-                                <td style={S.stockTd}>{formatCurrency((p.defaultSalePrice || 0) * 100, p.currency)}</td>
-                                <td style={{ ...S.stockTd, ...(isLowStock ? S.lowStock : {}) }}>{formatNumber(p.stock)}</td>
-                                <td style={S.stockTd}>{formatCurrency((p.defaultCost || 0) * p.stock * 100, p.currency)}</td>
                                 <td style={S.stockTd}>
-                                  {p.variants && p.variants.length > 0 ? (
-                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem' }}>
-                                      {p.variants.map((v, vi) => (
-                                        <span key={vi} style={{ ...S.variantTag, ...(v.stock <= 5 ? { borderColor: '#fecdca', color: '#b42318' } : {}) }}>
-                                          {v.name}
-                                          <span style={{ ...S.variantStock, ...(v.stock <= 5 ? { color: '#b42318' } : {}) }}>
-                                            {formatNumber(v.stock)}
+                                  {hasSizes ? (
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
+                                      {p.sizes.map((s, si) => {
+                                        const sp = s.salePrice ?? p.defaultSalePrice ?? 0;
+                                        return (
+                                          <span key={si} style={{ fontSize: '0.78rem', color: '#344054' }}>
+                                            <strong>{s.name.toUpperCase()}:</strong>{' '}
+                                            {formatCurrency(sp * 100, p.currency)}
                                           </span>
-                                          {v.sku && <span style={{ fontSize: '0.7rem', color: '#98a2b3', marginLeft: '0.15rem' }}>({v.sku})</span>}
+                                        );
+                                      })}
+                                    </div>
+                                  ) : (
+                                    formatCurrency((p.defaultSalePrice || 0) * 100, p.currency)
+                                  )}
+                                </td>
+                                <td style={{ ...S.stockTd, ...(isLowStock ? S.lowStock : {}) }}>{formatNumber(p.stock)}</td>
+                                <td style={S.stockTd}>
+                                  {hasSizes ? (
+                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem' }}>
+                                      {p.sizes.map((s, si) => (
+                                        <span key={si} style={{ ...S.variantTag, ...(s.stock <= 5 ? { borderColor: '#fecdca', color: '#b42318' } : {}) }}>
+                                          {s.name}
+                                          <span style={{ ...S.variantStock, ...(s.stock <= 5 ? { color: '#b42318' } : {}) }}>
+                                            {formatNumber(s.stock)}
+                                          </span>
                                         </span>
                                       ))}
                                     </div>
                                   ) : (
-                                    <span style={{ color: '#98a2b3', fontStyle: 'italic' }}>No variants</span>
+                                    <span style={{ color: '#98a2b3', fontStyle: 'italic' }}>No sizes</span>
                                   )}
-                                  {hasLowVariant && <span style={{ marginLeft: '0.35rem', color: '#b42318', fontSize: '0.75rem' }}>⚠️</span>}
+                                  {hasLowSize && <span style={{ marginLeft: '0.35rem', color: '#b42318', fontSize: '0.75rem' }}>⚠️</span>}
+                                </td>
+                                <td style={S.stockTd}>
+                                  {sizePriceInfo ? (
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
+                                      {sizePriceInfo.map((si, idx) => (
+                                        <span key={idx} style={{ fontSize: '0.78rem', color: '#344054' }}>
+                                          {si.name.toUpperCase()}:{' '}
+                                          {formatCurrency(si.lineSaleValue * 100, p.currency)}
+                                        </span>
+                                      ))}
+                                      <span style={{ fontWeight: 700, fontSize: '0.85rem', color: '#101828', borderTop: '1px dashed #d0d5dd', paddingTop: '0.15rem' }}>
+                                        {formatCurrency(sizedSaleValue * 100, p.currency)}
+                                      </span>
+                                    </div>
+                                  ) : (
+                                    formatCurrency(sizedCostValue * 100, p.currency)
+                                  )}
                                 </td>
                                 <td style={S.stockTd}>
                                   <span style={{
@@ -641,6 +653,16 @@ const orderRows = orders.map(o => {
                           })
                         )}
                       </tbody>
+                      <tfoot>
+                        <tr>
+                          <td style={{ ...S.stockTh, fontWeight: 700, borderTop: '2px solid #e4e7ec' }} colSpan={3}>Total</td>
+                          <td style={{ ...S.stockTh, fontWeight: 700, borderTop: '2px solid #e4e7ec' }}>–</td>
+                          <td style={{ ...S.stockTh, fontWeight: 700, borderTop: '2px solid #e4e7ec' }}>{formatNumber(filteredTotalStock)}</td>
+                          <td style={{ ...S.stockTh, fontWeight: 700, borderTop: '2px solid #e4e7ec' }}>–</td>
+                          <td style={{ ...S.stockTh, fontWeight: 700, borderTop: '2px solid #e4e7ec' }}>{formatCurrency(filteredTotalStockValue * 100)}</td>
+                          <td style={{ ...S.stockTh, fontWeight: 700, borderTop: '2px solid #e4e7ec' }}>–</td>
+                        </tr>
+                      </tfoot>
                     </table>
                   </div>
                 </div>

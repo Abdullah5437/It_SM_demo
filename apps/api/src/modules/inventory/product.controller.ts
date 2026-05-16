@@ -1,16 +1,20 @@
 import { Request, Response, NextFunction } from 'express';
 import productService from './product.service';
+import { logger } from './../../utils/logger';
 
 export class ProductController {
     // Create product
     async createProduct(req: Request, res: Response, next: NextFunction): Promise<void> {
         try {
+            console.log('[CONTROLLER] req.body.sizes:', JSON.stringify((req.body as any).sizes));
+            console.log('[CONTROLLER] full req.body:', JSON.stringify(req.body));
             const product = await productService.createProduct(req.body);
             res.status(201).json({
                 success: true,
                 data: product
             });
         } catch (error) {
+            logger.error({ action: 'create', entity: 'Product', error }, 'Error creating product');
             next(error);
         }
     }

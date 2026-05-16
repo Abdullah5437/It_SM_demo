@@ -2,71 +2,89 @@ import Product, { IProduct } from './product.model';
 import { logger } from '../../utils/logger';
 
 export class ProductService {
-    // Create product
-    async createProduct(data: Partial<IProduct>): Promise<IProduct> {
-        // If category is provided as an ObjectId string, try to resolve the category name
-        if (data.category) {
-            const Category = (await import('../categories/category.model')).default;
-            const cat = await Category.findById(data.category).lean();
-            if (cat) {
-                data.categoryId = cat._id as any;
-                // If category field still has the ID, replace with name
-                if (data.category && typeof data.category === 'string' && data.category.length === 24) {
-                    data.category = cat.name;
-                }
+    /**
+     * Auto-generate the next sequential SKU
+     * Format: PROD_YYXXX where YY = last 2 digits of current year, XXX = zero-padded sequential
+     * Example: PROD_26001, PROD_26002, ...
+     */
+    async generateSku(): Promise<string> {
+        const now = new Date();
+        const year = String(now.getFullYear()).slice(-2); // "26" for 2026
+        const prefix = `PROD_${year}`;
+
+        // Find the highest existing SKU with this year's prefix
+        const lastProduct = await Product.findOne({
+            sku: { $regex: `^${prefix}` }
+        })
+            .sort({ sku: -1 })
+            .select('sku')
+            .lean();
+
+        let nextSeq = 1;
+        if (lastProduct) {
+            const lastSeq = parseInt(lastProduct.sku.replace(prefix, ''), 10);
+            if (!isNaN(lastSeq)) {
+                nextSeq = lastSeq + 1;
             }
         }
+
+        const sku = `${prefix}${String(nextSeq).padStart(3, '0')}`;
+        return sku;
+    }
+
+    // Create product
+    async createProduct(data: Partial<IProduct>): Promise<any> {
+        // Auto-generate SKU if not provided
+        if (!data.sku) {
+            data.sku = await this.generateSku();
+        }
+        console.log('[DEBUG] createProduct input sizes:', JSON.stringify((data as any).sizes));
         const product = new Product(data);
+        console.log('[DEBUG] product instance sizes before save:', JSON.stringify(product.sizes));
         const saved = await product.save();
+        console.log('[DEBUG] saved product sizes:', JSON.stringify(saved.sizes));
+        const obj = saved.toObject();
+        console.log('[DEBUG] toObject sizes:', JSON.stringify((obj as any).sizes));
+        console.log('[DEBUG] Product created with sizes count:', (obj.sizes || []).length);
         logger.info({ action: 'create', entity: 'Product', id: saved._id, sku: saved.sku }, 'Product created');
-        return saved;
+        return obj;
     }
 
     // Get product by ID
     async getProductById(id: string): Promise<any> {
-        return Product.findById(id).populate('categoryId', 'name type').lean();
+        const product = await Product.findById(id).lean();
+        if (product) {
+            return { ...product, sizes: (product as any).sizes || [] };
+        }
+        return product;
     }
 
     // Get product by SKU
     async getProductBySku(sku: string): Promise<any> {
-        return Product.findOne({ sku }).populate('categoryId', 'name type').lean();
+        return Product.findOne({ sku }).lean();
     }
 
     // List products with filters and pagination
     async listProducts(filters: any = {}, skip: number = 0, limit: number = 10): Promise<any[]> {
         const { skip: _, limit: __, ...mongoFilters } = filters;
-        return Product.find(mongoFilters)
+        const products = await Product.find(mongoFilters)
             .skip(skip)
             .limit(limit)
             .sort({ createdAt: -1 })
-            .populate('categoryId', 'name type')
             .lean();
+        return products.map(p => ({ ...p, sizes: (p as any).sizes || [] }));
     }
 
     // Update product
     async updateProduct(id: string, data: Partial<IProduct>): Promise<any | null> {
-        // If category is provided as an ObjectId string, resolve the category name
-        if (data.category) {
-            try {
-                const Category = (await import('../categories/category.model')).default;
-                const cat = await Category.findById(data.category).lean();
-                if (cat) {
-                    data.categoryId = cat._id as any;
-                    if (data.category && typeof data.category === 'string' && data.category.length === 24) {
-                        data.category = cat.name;
-                    }
-                }
-            } catch {
-                // If not a valid ObjectId, keep as-is (already a name)
-            }
-        }
         const updated = await Product.findByIdAndUpdate(
             id, 
             { ...data, updatedAt: new Date() }, 
             { new: true, runValidators: true }
-        ).populate('categoryId', 'name type').lean();
+        ).lean();
         if (updated) {
             logger.info({ action: 'update', entity: 'Product', id, sku: updated.sku }, 'Product updated');
+            return { ...updated, sizes: (updated as any).sizes || [] };
         }
         return updated;
     }

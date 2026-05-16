@@ -67,6 +67,21 @@ export class OrderController {
     }
   }
 
+  async completeOrder(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { id } = req.params;
+      const order = await orderService.completeOrder(id);
+
+      res.json({
+        success: true,
+        data: order,
+        message: 'Order completed successfully',
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async cancelOrder(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;

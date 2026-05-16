@@ -613,6 +613,12 @@
   font-weight: 600;
   color: #344054;
 }
+.actionBtnBarcode:hover {
+  background: #0d5c63;
+  border-color: #0d5c63;
+  color: #ffffff !important;
+}
+
 .variantBtn{
   background: #0d5c63;
   color: white;

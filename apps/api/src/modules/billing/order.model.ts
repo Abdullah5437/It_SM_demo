@@ -9,6 +9,7 @@ export interface OrderLineItem {
   taxRateBps: number;
   lineTotalCents: number;
   productId?: mongoose.Types.ObjectId;
+  variantName?: string;
   servicePlanId?: mongoose.Types.ObjectId;
   serviceAddonId?: mongoose.Types.ObjectId;
 }
@@ -41,6 +42,7 @@ const orderLineItemSchema = new Schema<OrderLineItem>(
     taxRateBps: { type: Number, required: true, min: 0 },
     lineTotalCents: { type: Number, required: true },
     productId: { type: Schema.Types.ObjectId, sparse: true },
+    variantName: { type: String, sparse: true },
     servicePlanId: { type: Schema.Types.ObjectId, sparse: true },
     serviceAddonId: { type: Schema.Types.ObjectId, sparse: true },
   },

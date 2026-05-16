@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth, UserRole, User } from '../../contexts/AuthContext';
 import styles from './login.module.css';
 import { useRouter } from 'next/router';
 
@@ -21,14 +21,6 @@ type LoginResponse = {
     expiresIn: number;
   };
 };
-export type UserRole =
-  | 'admin'
-  | 'user'
-  | 'support'
-  | 'sales'
-  | 'accounts';
-
-export type UserStatus = 'active' | 'inactive' | 'suspended';
 
 export default function LoginForm() {
   const { login } = useAuth();
@@ -63,32 +55,24 @@ export default function LoginForm() {
         throw new Error(message || 'Invalid credentials');
       }
 
+     
       const json = (await res.json()) as { data: LoginResponse };
       const { user, tokens } = json.data;
-      const isUserStatus = (status: string): status is UserStatus => {
-  return ['active', 'inactive', 'suspended'].includes(status);
-};
-      
+    
       login({
         user: {
           id: user.id,
           email: user.email,
           name: user.name || '',
-         roles: (user.roles ?? []).filter((r): r is UserRole =>
-      ['admin', 'user', 'support', 'sales', 'accounts'].includes(r)
-    ),
-        status:isUserStatus(user.status) ? user.status : 'inactive',
+          roles: user.roles as UserRole[],
+          status: user.status as User['status'],
         },
         token: tokens.accessToken,
       });
       router.push('/dashboard');
     } catch (err: unknown) {
-  if (err instanceof Error) {
-    setError(err.message);
-  } else {
-    setError('Login failed');
-  }
-}finally {
+      setError(err instanceof Error ? err.message : 'Login failed');
+    } finally {
       setLoading(false);
     }
   };
@@ -115,9 +99,7 @@ export default function LoginForm() {
                 type="email"
                 placeholder="you@example.com"
                 value={email}
-               onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-  setEmail(e.target.value)
-}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
                 required
               />
             </div>
@@ -130,9 +112,7 @@ export default function LoginForm() {
                 type="password"
                 placeholder="••••••••"
                 value={password}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-  setPassword(e.target.value)
-}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
                 required
               />
             </div>
@@ -145,12 +125,12 @@ export default function LoginForm() {
             )}
 
             <button
-  className={styles.button}
-  type="submit"
-  disabled={loading}
->
-  {loading ? 'Logging in...' : 'Login'}
-</button>
+              className={styles.button}
+              type="submit"
+              disabled={loading}
+            >
+              {loading ? 'Logging in...' : 'Login'}
+            </button>
           </form>
         </div>
       </div>

@@ -85,7 +85,7 @@ export default function HorizontalChart() {
               />
             </div>
 
-            <span className={styles.value}>${item.value.toFixed(2)}</span>
+            <span className={styles.value}>{item.value.toFixed(2)}</span>
           </div>
         );
       })}

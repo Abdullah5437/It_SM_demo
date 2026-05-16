@@ -1,14 +1,15 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { toast } from 'react-toastify';
 import styles from './ProductTable.module.css';
 import LoaderPulse from '../Loader/Loader';
+import BarcodePrint from './BarcodePrint';
 
-interface ProductVariant {
+// Dynamic import for JsBarcode (client-side only)
+let JsBarcode: any = null;
+
+interface ProductSize {
   name: string;
-  sku?: string;
   stock: number;
-  salePrice?: number;
-  costPrice?: number;
 }
 
 interface Product {
@@ -17,17 +18,13 @@ interface Product {
   name: string;
   title?: string;
   description?: string;
-  image?: string;
   type: string;
-  category?: string;
-  subcategory?: string;
-  subsubcategory?: string;
   defaultSalePrice: number;
   defaultCost: number;
   currency: string;
   stock: number;
   status: string;
-  variants?: ProductVariant[];
+  sizes?: ProductSize[];
   createdAt: string;
 }
 
@@ -37,11 +34,58 @@ interface ProductTableProps {
   refreshKey?: number;
 }
 
+function BarcodeCell({ sku }: { sku: string }) {
+  const svgRef = useRef<SVGSVGElement>(null);
+
+  useEffect(() => {
+    if (!JsBarcode) {
+      import('jsbarcode').then(mod => {
+        JsBarcode = mod.default || mod;
+        if (svgRef.current) {
+          try {
+            JsBarcode(svgRef.current, sku, {
+              format: 'CODE128',
+              width: 1,
+              height: 25,
+              displayValue: false,
+              margin: 2,
+              background: '#ffffff',
+            });
+          } catch {
+            // silent
+          }
+        }
+      });
+    } else if (svgRef.current) {
+      try {
+        JsBarcode(svgRef.current, sku, {
+          format: 'CODE128',
+          width: 1,
+          height: 25,
+          displayValue: false,
+          margin: 2,
+          background: '#ffffff',
+        });
+      } catch {
+        // silent
+      }
+    }
+  }, [sku]);
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.15rem' }}>
+      <svg ref={svgRef} style={{ width: '100%', maxWidth: '100px' }}></svg>
+      <span style={{ fontSize: '0.65rem', color: '#667085', fontFamily: 'monospace', letterSpacing: '0.05em' }}>{sku}</span>
+    </div>
+  );
+}
+
 export default function ProductTable({ onEdit, onRefresh, refreshKey }: ProductTableProps) {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
-  const [variantPopup, setVariantPopup] = useState<{ id: string; variants: ProductVariant[] } | null>(null);
+  const [sizePopup, setSizePopup] = useState<{ id: string; sizes: ProductSize[] } | null>(null);
+  const [barcodePrint, setBarcodePrint] = useState<{ items: { sku: string; name: string; salePrice?: number; currency?: string }[]; mode: 'single' | 'all' } | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
@@ -105,28 +149,44 @@ export default function ProductTable({ onEdit, onRefresh, refreshKey }: ProductT
 
   // Filter products by search query and dropdown filters
   const filteredProducts = products.filter(p => {
-    // Search query filter
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       const matchesSearch =
         p.name.toLowerCase().includes(q) ||
         p.sku.toLowerCase().includes(q) ||
-        (p.category && p.category.toLowerCase().includes(q)) ||
-        (p.subcategory && p.subcategory.toLowerCase().includes(q)) ||
         (p.type && p.type.toLowerCase().includes(q)) ||
         (p.title && p.title.toLowerCase().includes(q));
       if (!matchesSearch) return false;
     }
-    // Type filter
     if (filterType && p.type !== filterType) return false;
-    // Status filter
     if (filterStatus && p.status !== filterStatus) return false;
     return true;
   });
 
-  // Calculations for totals (based on filtered results)
-  const totalCost = filteredProducts.reduce((sum, p) => sum + (p.defaultCost * p.stock), 0);
-  const totalSale = filteredProducts.reduce((sum, p) => sum + (p.defaultSalePrice * p.stock), 0);
+  // Calculate totals respecting per-size pricing
+  const calcProductCost = (p: Product): number => {
+    if (p.sizes && p.sizes.length > 0) {
+      return p.sizes.reduce((sum, s) => {
+        const qty = s.stock || 0;
+        const cp = (s as any).costPrice != null ? Number((s as any).costPrice) : p.defaultCost;
+        return sum + cp * qty;
+      }, 0);
+    }
+    return p.defaultCost * p.stock;
+  };
+  const calcProductSale = (p: Product): number => {
+    if (p.sizes && p.sizes.length > 0) {
+      return p.sizes.reduce((sum, s) => {
+        const qty = s.stock || 0;
+        const sp = (s as any).salePrice != null ? Number((s as any).salePrice) : p.defaultSalePrice;
+        return sum + sp * qty;
+      }, 0);
+    }
+    return p.defaultSalePrice * p.stock;
+  };
+
+  const totalCost = filteredProducts.reduce((sum, p) => sum + calcProductCost(p), 0);
+  const totalSale = filteredProducts.reduce((sum, p) => sum + calcProductSale(p), 0);
   const totalProfit = totalSale - totalCost;
   const totalStock = filteredProducts.reduce((sum, p) => sum + p.stock, 0);
 
@@ -152,6 +212,32 @@ export default function ProductTable({ onEdit, onRefresh, refreshKey }: ProductT
           <p className={styles.kicker}>Product Inventory</p>
           <h3 className={styles.heading}>All Products ({filteredProducts.length})</h3>
         </div>
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <button
+            onClick={() => setBarcodePrint({
+              items: filteredProducts.map(p => ({
+                sku: p.sku,
+                name: p.name,
+                salePrice: p.defaultSalePrice,
+                currency: p.currency,
+              })),
+              mode: 'all',
+            })}
+            style={{
+              padding: '0.6rem 1rem',
+              background: '#ffffff',
+              color: '#0d5c63',
+              border: '1px solid #0d5c63',
+              borderRadius: '0.5rem',
+              cursor: 'pointer',
+              fontWeight: 600,
+              fontSize: '0.85rem',
+              whiteSpace: 'nowrap',
+            }}
+          >
+             Print All Barcodes
+          </button>
+        </div>
       </div>
 
       {/* Search & Filters */}
@@ -161,7 +247,7 @@ export default function ProductTable({ onEdit, onRefresh, refreshKey }: ProductT
           <input
             className={styles.searchInput}
             type="text"
-            placeholder="Search by name, SKU, category, type..."
+            placeholder="Search by name, SKU, type..."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
           />
@@ -175,10 +261,10 @@ export default function ProductTable({ onEdit, onRefresh, refreshKey }: ProductT
           onChange={e => setFilterType(e.target.value)}
         >
           <option value="">All Types</option>
-          <option value="hardware">Hardware</option>
-          <option value="software">Software</option>
-          <option value="component">Component</option>
-          <option value="other">Other</option>
+          <option value="Mens">Mens</option>
+          <option value="Women">Women</option>
+          <option value="Children">Children</option>
+          <option value="Other">Other</option>
         </select>
         <select
           className={styles.filterSelect}
@@ -204,15 +290,15 @@ export default function ProductTable({ onEdit, onRefresh, refreshKey }: ProductT
         </div>
         <div className={styles.summaryCard}>
           <span className={styles.summaryLabel}>Total Cost</span>
-          <span className={styles.summaryValue}>{formatPrice(totalCost, 'USD')}</span>
+          <span className={styles.summaryValue}>{formatPrice(totalCost, 'PKR')}</span>
         </div>
         <div className={styles.summaryCard}>
           <span className={styles.summaryLabel}>Total Sale Value</span>
-          <span className={styles.summaryValue}>{formatPrice(totalSale, 'USD')}</span>
+          <span className={styles.summaryValue}>{formatPrice(totalSale, 'PKR')}</span>
         </div>
         <div className={`${styles.summaryCard} ${totalProfit >= 0 ? styles.profitPositive : styles.profitNegative}`}>
           <span className={styles.summaryLabel}>Est. Profit</span>
-          <span className={styles.summaryValue}>{formatPrice(totalProfit, 'USD')}</span>
+          <span className={styles.summaryValue}>{formatPrice(totalProfit, 'PKR')}</span>
         </div>
       </div>
 
@@ -220,24 +306,22 @@ export default function ProductTable({ onEdit, onRefresh, refreshKey }: ProductT
         <table className={styles.table}>
           <thead>
             <tr>
-              <th>Image</th>
-              {/* <th>SKU</th> */}
+              <th>Barcode / SKU</th>
               <th>Name</th>
               <th>Type</th>
-              <th>Category</th>
               <th>Unit Price</th>
               <th>Cost × Stock</th>
               <th>Sale × Stock</th>
               <th>Total Stock</th>
               <th>Status</th>
-              <th>Variants</th>
+              <th>Sizes</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
             {filteredProducts.length === 0 ? (
               <tr>
-                <td colSpan={12}>
+                <td colSpan={11}>
                   <div className={styles.emptyState}>
                     <p style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>No products match your search</p>
                     <p style={{ fontSize: '0.9rem', color: '#98a2b3' }}>Try adjusting your search or filter criteria.</p>
@@ -246,31 +330,48 @@ export default function ProductTable({ onEdit, onRefresh, refreshKey }: ProductT
               </tr>
             ) : (
             filteredProducts.map(product => {
-              const hasVariants = product.variants && product.variants.length > 0;
+              const hasSizes = product.sizes && product.sizes.length > 0;
+              
+              // Calculate size-based metrics
+              let avgSalePrice = product.defaultSalePrice;
+              let totalCostValue = product.defaultCost * product.stock;
+              let totalSaleValue = product.defaultSalePrice * product.stock;
+              
+              if (hasSizes) {
+                let totalSizeStock = 0;
+                let weightedSaleSum = 0;
+                let weightedCostSum = 0;
+                
+                for (const s of product.sizes!) {
+                  const qty = s.stock || 0;
+                  totalSizeStock += qty;
+                  const sp = (s as any).salePrice != null ? Number((s as any).salePrice) : product.defaultSalePrice;
+                  const cp = (s as any).costPrice != null ? Number((s as any).costPrice) : product.defaultCost;
+                  weightedSaleSum += sp * qty;
+                  weightedCostSum += cp * qty;
+                }
+                
+                avgSalePrice = totalSizeStock > 0 ? weightedSaleSum / totalSizeStock : product.defaultSalePrice;
+                totalCostValue = weightedCostSum;
+                totalSaleValue = weightedSaleSum;
+              }
+              
               return (
                 <tr key={product._id}>
                   <td>
-                    {product.image ? (
-                      <img src={product.image} alt={product.name} className={styles.productImage} />
-                    ) : (
-                      <div className={styles.productImagePlaceholder}>N/A</div>
-                    )}
+                    <BarcodeCell sku={product.sku} />
                   </td>
-                  {/* <td><span className={styles.skuPill}>{product.sku}</span></td> */}
                   <td>
                     <div className={styles.nameCell}>{product.name}</div>
                     {product.title && <div style={{ fontSize: '0.78rem', color: '#98a2b3' }}>{product.title}</div>}
                   </td>
                   <td><span className={styles.typePill}>{product.type}</span></td>
-                  <td>
-                    <div className={styles.catCell}>
-                      {product.category || '-'}
-                      {product.subcategory && <div style={{ fontSize: '0.78rem' }}>→ {product.subcategory}</div>}
-                    </div>
+                  <td className={styles.priceCell}>
+                    {formatPrice(avgSalePrice, product.currency)}
+                    {hasSizes && <div style={{ fontSize: '0.7rem', color: '#98a2b3', fontWeight: 400 }}>avg across sizes</div>}
                   </td>
-                  <td className={styles.priceCell}>{formatPrice(product.defaultSalePrice, product.currency)}</td>
-                  <td className={styles.stockCell}>{formatPrice(product.defaultCost * product.stock, product.currency)}</td>
-                  <td className={styles.stockCell}>{formatPrice(product.defaultSalePrice * product.stock, product.currency)}</td>
+                  <td className={styles.stockCell}>{formatPrice(totalCostValue, product.currency)}</td>
+                  <td className={styles.stockCell}>{formatPrice(totalSaleValue, product.currency)}</td>
                   <td className={styles.stockCell}>{product.stock}</td>
                   <td>
                     <span className={`${styles.statusDot} ${getStatusClass(product.status)}`}>
@@ -279,20 +380,39 @@ export default function ProductTable({ onEdit, onRefresh, refreshKey }: ProductT
                     </span>
                   </td>
                   <td>
-                    {hasVariants ? (
+                    {hasSizes ? (
                       <button
                         className={styles.variantBtn}
-                        onClick={() => setVariantPopup({ id: product._id, variants: product.variants! })}
-                        title="View variant details"
+                        onClick={() => setSizePopup({ id: product._id, sizes: product.sizes! })}
+                        title="View size details"
                       >
-                       {product.variants!.length} variant{product.variants!.length > 1 ? 's' : ''}
+                       {product.sizes!.length} size{product.sizes!.length > 1 ? 's' : ''}
                       </button>
                     ) : (
-                      <span style={{ color: '#98a2b3', fontSize: '0.85rem', fontStyle: 'italic' }}>No variants</span>
+                      <span style={{ color: '#98a2b3', fontSize: '0.85rem', fontStyle: 'italic' }}>No sizes</span>
                     )}
                   </td>
                   <td>
                     <div className={styles.actions}>
+                      <button
+                        className={`${styles.actionBtn} ${styles.actionBtnBarcode}`}
+                        onClick={() => setBarcodePrint({
+                          items: [{
+                            sku: product.sku,
+                            name: product.name,
+                            salePrice: product.defaultSalePrice,
+                            currency: product.currency,
+                          }],
+                          mode: 'single',
+                        })}
+                        title="Print barcode for this product"
+                        style={{
+                          borderColor: '#0d5c63',
+                          color: '#0d5c63',
+                        }}
+                      >
+                         Barcode
+                      </button>
                       <button
                         className={`${styles.actionBtn} ${styles.actionBtnEdit}`}
                         onClick={() => onEdit && onEdit(product)}
@@ -321,58 +441,55 @@ export default function ProductTable({ onEdit, onRefresh, refreshKey }: ProductT
         </table>
       </div>
 
-      {/* Variant Detail Popup */}
-      {variantPopup && (
-        <div className={styles.modalOverlay} onClick={() => setVariantPopup(null)}>
+      {/* Size Detail Popup */}
+      {sizePopup && (
+        <div className={styles.modalOverlay} onClick={() => setSizePopup(null)}>
           <div className={styles.modal} onClick={e => e.stopPropagation()}>
-            <button className={styles.modalClose} onClick={() => setVariantPopup(null)}>×</button>
-            <h3 className={styles.modalTitle}>Variant Details</h3>
+            <button className={styles.modalClose} onClick={() => setSizePopup(null)}>×</button>
+            <h3 className={styles.modalTitle}>Size Details</h3>
             <p className={styles.kicker} style={{ marginBottom: '1rem' }}>
-              {variantPopup.variants.length} variant{variantPopup.variants.length > 1 ? 's' : ''}
+              {sizePopup.sizes.length} size{sizePopup.sizes.length > 1 ? 's' : ''}
             </p>
-            {variantPopup.variants.map((v, vi) => {
-              const vProfit = (v.salePrice || 0) - (v.costPrice || 0);
-              const vTotalStockValue = (v.salePrice || 0) * v.stock;
-              const vTotalCostValue = (v.costPrice || 0) * v.stock;
+            {sizePopup.sizes.map((s, vi) => {
+              const hasSalePrice = (s as any).salePrice != null;
+              const hasCostPrice = (s as any).costPrice != null;
               return (
                 <div key={vi} className={styles.variantPopupCard}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <strong style={{ fontSize: '1rem', color: '#101828' }}>{v.name || 'Unnamed Variant'}</strong>
-                    {v.sku && <span className={styles.skuPill}>{v.sku}</span>}
+                    <strong style={{ fontSize: '1rem', color: '#101828' }}>{s.name}</strong>
                   </div>
                   <div className={styles.variantPopupGrid}>
                     <div className={styles.variantPopupItem}>
                       <span className={styles.variantPopupLabel}>Stock</span>
-                      <span className={styles.variantPopupValue}>{v.stock}</span>
+                      <span className={styles.variantPopupValue}>{s.stock}</span>
                     </div>
-                    <div className={styles.variantPopupItem}>
-                      <span className={styles.variantPopupLabel}>Sale Price</span>
-                      <span className={styles.variantPopupValue}>{formatPrice(v.salePrice || 0, 'USD')}</span>
-                    </div>
-                    <div className={styles.variantPopupItem}>
-                      <span className={styles.variantPopupLabel}>Cost Price</span>
-                      <span className={styles.variantPopupValue}>{formatPrice(v.costPrice || 0, 'USD')}</span>
-                    </div>
-                    <div className={styles.variantPopupItem}>
-                      <span className={styles.variantPopupLabel}>Profit per unit</span>
-                      <span className={`${styles.variantPopupValue} ${vProfit >= 0 ? styles.profitPositive : styles.profitNegative}`}>
-                        {formatPrice(vProfit, 'USD')}
-                      </span>
-                    </div>
-                    <div className={styles.variantPopupItem}>
-                      <span className={styles.variantPopupLabel}>Total Stock Value (Sale)</span>
-                      <span className={styles.variantPopupValue}>{formatPrice(vTotalStockValue, 'USD')}</span>
-                    </div>
-                    <div className={styles.variantPopupItem}>
-                      <span className={styles.variantPopupLabel}>Total Stock Value (Cost)</span>
-                      <span className={styles.variantPopupValue}>{formatPrice(vTotalCostValue, 'USD')}</span>
-                    </div>
+                    {hasSalePrice && (
+                      <div className={styles.variantPopupItem}>
+                        <span className={styles.variantPopupLabel}>Sale Price</span>
+                        <span className={styles.variantPopupValue}>${Number((s as any).salePrice).toFixed(2)}</span>
+                      </div>
+                    )}
+                    {hasCostPrice && (
+                      <div className={styles.variantPopupItem}>
+                        <span className={styles.variantPopupLabel}>Cost Price</span>
+                        <span className={styles.variantPopupValue}>${Number((s as any).costPrice).toFixed(2)}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               );
             })}
           </div>
         </div>
+      )}
+
+      {/* Barcode Print Modal */}
+      {barcodePrint && (
+        <BarcodePrint
+          items={barcodePrint.items}
+          mode={barcodePrint.mode}
+          onClose={() => setBarcodePrint(null)}
+        />
       )}
     </div>
   );

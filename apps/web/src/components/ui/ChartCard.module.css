@@ -7,9 +7,8 @@
 .chartCardHeader {
   display: flex;
   align-items: flex-start;
-  justify-content: space-around;
+  justify-content: space-between;
   margin-bottom: 1.5rem;
-  width: 90%;
 }
 
 .chartCardTitle {
@@ -25,7 +24,6 @@
 
 .subtitle {
   font-size: 0.875rem;
-  width: 90%;
   color: #4f7a83;
   margin: 0;
 }
@@ -33,7 +31,6 @@
 .chartCardActions {
   display: flex;
   gap: 0.5rem;
-  width: 40%;
 }
 
 .chartCardContent {

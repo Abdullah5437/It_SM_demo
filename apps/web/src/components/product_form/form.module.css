@@ -274,6 +274,190 @@
   display: none;
 }
 
+/* ── Sizes Section ── */
+
+.sizesFlex {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.sizeCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.5rem;
+  border-radius: 10px;
+  /* margin-bottom: 1.5rem; */
+}
+
+/* .sizeCardSelected {
+  border: 1px solid #0d5c63;
+  background: #f8fafc;
+} */
+
+.sizeCardUnselected {
+  background: transparent;
+}
+
+.sizeToggleBtn {
+  width: 4rem;
+  height: 3rem;
+  border-radius: 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.25rem;
+}
+
+.sizeToggleBtnSelected {
+  border: 2px solid #0d5c63;
+  background: #0d5c63;
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(13,92,99,0.2);
+}
+
+.sizeToggleBtnUnselected {
+  border: 1px solid #d0d5dd;
+  background: #ffffff;
+  color: #344054;
+  box-shadow: none;
+}
+
+.sizeInputs {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  width: 100px;
+}
+
+.sizeInputRow {
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+.sizeInputLabel {
+  font-size: 0.8rem;
+  color: #667085;
+  font-weight: 600;
+  width: 1.5rem;
+  text-align: center;
+}
+
+.sizeInputField {
+  flex: 1;
+  padding: 0.25rem;
+  border-radius: 6px;
+  border: 1px solid #d0d5dd;
+  font-size: 0.95rem;
+  text-align: center;
+  outline: none;
+  box-sizing: border-box;
+  width: 4rem;
+}
+
+.customSizeRemoveBtn {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  border: 1px solid #fecdca;
+  background: #fef3f2;
+  color: #b42318;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  line-height: 1;
+}
+
+.customSectionLabel {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #667085;
+  margin-bottom: 0.5rem;
+}
+
+.customSizeFlex {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.customSizeHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.addCustomSizeRow {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+.addCustomSizeInput {
+  padding: 0.8rem 1.2rem;
+  border-radius: 8px;
+  border: 1px solid #d0d5dd;
+  font-size: 1rem;
+  outline: none;
+  flex: 1;
+  min-width: 120px;
+}
+
+.addCustomSizeBtn {
+  padding: 0.85rem;
+  border-radius: 8px;
+  border: 1px solid #0d5c63;
+  background: #0d5c63;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.skuDisplay {
+  padding: 0.7rem 0.85rem;
+  border-radius: 0.7rem;
+  border: 1px solid #0d5c63;
+  background: #f0f9fa;
+  color: #0d5c63;
+  font-size: 0.9rem;
+  font-weight: 700;
+  font-family: monospace;
+  letter-spacing: 0.05em;
+}
+
+.stockFromSizes {
+  padding: 0.75rem 1rem;
+  border-radius: 0.9rem;
+  border: 1px solid #eaecf0;
+  background: #f9fafb;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #344054;
+}
+
+.sizePricingNote {
+  font-size: 0.85rem;
+  color: #667085;
+  margin-bottom: 1rem;
+  font-style: italic;
+}
+
 @media (max-width: 900px) {
   .layout {
     grid-template-columns: 1fr;

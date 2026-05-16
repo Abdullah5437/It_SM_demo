@@ -29,6 +29,10 @@ const pageMeta: Record<string, PageMeta> = {
     title: 'Products',
     subtitle: 'Create, review, and manage your product records in one place.',
   },
+  '/scan-order': {
+    title: 'Scan & Order',
+    subtitle: 'Scan barcodes, select sizes and prices, and create orders quickly.',
+  },
   '/order': {
     title: 'Orders',
     subtitle: 'Track incoming orders and keep fulfillment moving smoothly.',

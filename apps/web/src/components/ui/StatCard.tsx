@@ -13,21 +13,21 @@ type OrderStats = {
   totalProfitCents: number;
 };
 
-function formatCurrency(cents: number): string {
-  const dollars = cents / 100;
-  if (dollars >= 1000) {
-    return `$${(dollars / 1000).toFixed(1)}k`;
+function formatCurrency(paisa: number): string {
+  const pkr = paisa / 100;
+
+  if (pkr >= 1000) {
+    return `PKR ${(pkr / 1000).toFixed(1)}k`;
   }
-  return `$${dollars.toFixed(2)}`;
+
+  return `PKR ${pkr.toFixed(2)}`;
 }
 
 function isPositive(value: number): boolean {
   return value >= 0;
 }
 
-import React from 'react';
-
-export default function StatsCards(): React.ReactElement {
+export default function StatsCards(): JSX.Element {
   const [stats, setStats] = useState<OrderStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);

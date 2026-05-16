@@ -3,15 +3,65 @@ import { toast } from 'react-toastify';
 import styles from "./form.module.css";
 import LoaderPulse from '../Loader/Loader';
 
+interface ProductSize {
+  name: string;
+  stock: number;
+  salePrice?: number;
+  costPrice?: number;
+}
+
 interface ProductItem {
   _id: string;
   name: string;
   sku: string;
   defaultSalePrice: number;
+  sizes?: ProductSize[];
 }
 
+interface ServicePlanItem {
+  _id: string;
+  name: string;
+  price?: number;
+}
 
+interface CartItem {
+  cartId: string;
+  lineNo: number;
+  itemType: 'product' | 'service' | 'addon' | 'other';
+  description: string;
+  qty: number;
+  unitPrice: number;
+  taxRate: number;
+  lineTotal: number;
+  productId: string;
+  variantName: string;
+  servicePlanId?: string;
+  serviceAddonId?: string;
+}
 
+interface OrderLine {
+  lineNo: number;
+  itemType: 'product' | 'service' | 'addon' | 'other';
+  description: string;
+  qty: string;
+  unitPrice: string;
+  taxRate: string;
+  lineTotal: number;
+  productId?: string;
+  variantName?: string;
+  servicePlanId?: string;
+  serviceAddonId?: string;
+}
+
+interface FormData {
+  orderNo: string;
+  clientName: string;
+  clientEmail: string;
+  orderDate: string;
+  status: string;
+  currency: string;
+  lines: OrderLine[];
+}
 
 interface EditOrder {
   _id: string;
@@ -30,6 +80,7 @@ interface EditOrder {
     taxRateBps: number;
     lineTotalCents: number;
     productId?: string;
+    variantName?: string;
     servicePlanId?: string;
     serviceAddonId?: string;
   }>;
@@ -40,15 +91,29 @@ interface OrderFormProps {
   onSuccess?: () => void;
 }
 
+let cartIdCounter = 0;
+
 export default function OrderForm({
   editOrder,
   onSuccess,
 }: OrderFormProps) {
   const [products, setProducts] = useState<ProductItem[]>([]);
+  const [, setServicePlans] = useState<ServicePlanItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
-  const getInitialData = () => {
+  // Cart state
+  const [cart, setCart] = useState<CartItem[]>([]);
+
+  // Product selection form state (for adding items to cart)
+  const [newItemProductId, setNewItemProductId] = useState('');
+  const [newItemSize, setNewItemSize] = useState('');
+  const [newItemQty, setNewItemQty] = useState('1');
+  const [newItemUnitPrice, setNewItemUnitPrice] = useState('');
+  const [newItemTaxRate, setNewItemTaxRate] = useState('0');
+  const [newItemDescription, setNewItemDescription] = useState('');
+
+  const getInitialData = (): FormData => {
     if (editOrder) {
       return {
         orderNo: editOrder.orderNo,
@@ -66,6 +131,7 @@ export default function OrderForm({
           taxRate: String(line.taxRateBps / 100),
           lineTotal: line.lineTotalCents / 100,
           productId: line.productId,
+          variantName: line.variantName,
           servicePlanId: line.servicePlanId,
           serviceAddonId: line.serviceAddonId,
         })),
@@ -77,26 +143,13 @@ export default function OrderForm({
       clientName: '',
       clientEmail: '',
       orderDate: new Date().toISOString().split('T')[0],
-      status: 'pending' as const,
-      currency: 'USD',
-      lines: [
-        {
-          lineNo: 1,
-          itemType: 'product' as const,
-          description: '',
-          qty: '1',
-          unitPrice: '',
-          taxRate: '0',
-          lineTotal: 0,
-          productId: '',
-          servicePlanId: '',
-          serviceAddonId: '',
-        },
-      ],
+      status: 'pending',
+      currency: 'PKR',
+      lines: [],
     };
   };
 
-  const [formData, setFormData] = useState(getInitialData);
+  const [formData, setFormData] = useState<FormData>(getInitialData);
 
   const token =
     typeof window !== 'undefined'
@@ -110,7 +163,7 @@ export default function OrderForm({
 
   const fetchData = useCallback(async () => {
     try {
-      const [productsRes] = await Promise.all([
+      const [productsRes, servicesRes] = await Promise.all([
         window.fetch('http://localhost:4000/api/v1/inventory/products', {
           headers,
         }),
@@ -120,11 +173,15 @@ export default function OrderForm({
       ]);
 
       const productsJson = await productsRes.json();
+      const servicesJson = await servicesRes.json();
 
       if (productsJson.success) {
         setProducts(productsJson.data || []);
       }
 
+      if (servicesJson.success) {
+        setServicePlans(servicesJson.data || []);
+      }
     } catch (_err) {
       toast.error('Failed to load form data');
     } finally {
@@ -134,7 +191,25 @@ export default function OrderForm({
 
   useEffect(() => {
     fetchData();
-  }, [fetchData]);
+    // If editing, populate cart from existing order lines
+    if (editOrder) {
+      const cartItems: CartItem[] = editOrder.lines.map((line, idx) => ({
+        cartId: `edit_${idx}`,
+        lineNo: line.lineNo,
+        itemType: line.itemType,
+        description: line.description,
+        qty: line.qty,
+        unitPrice: line.unitPriceCents / 100,
+        taxRate: line.taxRateBps / 100,
+        lineTotal: line.lineTotalCents / 100,
+        productId: line.productId || '',
+        variantName: line.variantName || '',
+        servicePlanId: line.servicePlanId,
+        serviceAddonId: line.serviceAddonId,
+      }));
+      setCart(cartItems);
+    }
+  }, [fetchData, editOrder]);
 
   const calculateLineTotal = (
     qty: number,
@@ -146,15 +221,13 @@ export default function OrderForm({
     return subtotal + tax;
   };
 
-  const orderSubtotal = formData.lines.reduce((sum, line) => {
-    return sum + Number(line.qty || 0) * Number(line.unitPrice || 0);
+  const orderSubtotal = cart.reduce((sum, item) => {
+    return sum + item.qty * item.unitPrice;
   }, 0);
 
-  const orderTax = formData.lines.reduce((sum, line) => {
-    const subtotal =
-      Number(line.qty || 0) * Number(line.unitPrice || 0);
-
-    return sum + subtotal * (Number(line.taxRate || 0) / 100);
+  const orderTax = cart.reduce((sum, item) => {
+    const subtotal = item.qty * item.unitPrice;
+    return sum + subtotal * (item.taxRate / 100);
   }, 0);
 
   const orderTotal = orderSubtotal + orderTax;
@@ -163,108 +236,145 @@ export default function OrderForm({
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
-
     setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
   };
 
-  const handleLineChange = (
-    index: number,
-    field: string,
-    value: string
-  ) => {
-    setFormData((prev) => {
-      const updatedLines = [...prev.lines];
+  // ---- Product selection helpers ----
+  const selectedProduct = newItemProductId
+    ? products.find((p) => p._id === newItemProductId)
+    : null;
+  const selectedProductSize = selectedProduct?.sizes?.find(
+    (s) => s.name === newItemSize
+  );
 
-      updatedLines[index] = {
-        ...updatedLines[index],
-        [field]: value,
-      };
+  // When product changes, reset size and set default price
+  const handleNewItemProductChange = (productId: string) => {
+    setNewItemProductId(productId);
+    setNewItemSize('');
 
-      const qty = Number(updatedLines[index].qty || 0);
-      const unitPrice = Number(updatedLines[index].unitPrice || 0);
-      const taxRate = Number(updatedLines[index].taxRate || 0);
+    const product = products.find((p) => p._id === productId);
+    if (!product) {
+      setNewItemUnitPrice('');
+      setNewItemDescription('');
+      return;
+    }
 
-      updatedLines[index].lineTotal = calculateLineTotal(
-        qty,
-        unitPrice,
-        taxRate
-      );
-
-      return {
-        ...prev,
-        lines: updatedLines,
-      };
-    });
+    setNewItemDescription(product.name);
+    // If product has sizes, don't set price yet - wait for size selection
+    if (product.sizes && product.sizes.length > 0) {
+      setNewItemUnitPrice('');
+    } else {
+      setNewItemUnitPrice(String(product.defaultSalePrice));
+    }
   };
 
-  const handleProductSelect = (
-    index: number,
-    productId: string
-  ) => {
-    const product = products.find((p) => p._id === productId);
+  // When size changes, update price with the size's salePrice if available
+  const handleNewItemSizeChange = (sizeName: string) => {
+    setNewItemSize(sizeName);
 
+    if (!selectedProduct) return;
+    const size = selectedProduct.sizes?.find((s) => s.name === sizeName);
+    if (size && size.salePrice != null) {
+      setNewItemUnitPrice(String(size.salePrice));
+    } else if (size) {
+      // If size has no salePrice, fall back to defaultSalePrice
+      setNewItemUnitPrice(String(selectedProduct.defaultSalePrice));
+    }
+  };
+
+  // Add item to cart
+  const handleAddToCart = () => {
+    if (!newItemProductId) {
+      toast.error('Please select a product');
+      return;
+    }
+    const product = products.find((p) => p._id === newItemProductId);
     if (!product) return;
 
-    setFormData((prev) => {
-      const updatedLines = [...prev.lines];
+    if (product.sizes && product.sizes.length > 0 && !newItemSize) {
+      toast.error('Please select a size for this product');
+      return;
+    }
 
-      updatedLines[index] = {
-        ...updatedLines[index],
-        productId,
-        description: product.name,
-        unitPrice: String(product.defaultSalePrice),
-        lineTotal: calculateLineTotal(
-          Number(updatedLines[index].qty || 1),
-          product.defaultSalePrice,
-          Number(updatedLines[index].taxRate || 0)
-        ),
-      };
+    const qty = Number(newItemQty);
+    if (!qty || qty <= 0) {
+      toast.error('Please enter a valid quantity');
+      return;
+    }
 
-      return {
-        ...prev,
-        lines: updatedLines,
-      };
-    });
+    const unitPrice = Number(newItemUnitPrice);
+    if (!unitPrice || unitPrice <= 0) {
+      toast.error('Please enter a valid unit price');
+      return;
+    }
+
+    const taxRate = Number(newItemTaxRate);
+    const lineTotal = calculateLineTotal(qty, unitPrice, taxRate);
+
+    cartIdCounter += 1;
+
+    const description =
+      newItemDescription ||
+      product.name +
+        (newItemSize ? ` - ${newItemSize}` : '');
+
+    const newItem: CartItem = {
+      cartId: `cart_${cartIdCounter}`,
+      lineNo: cart.length + 1,
+      itemType: 'product',
+      description,
+      qty,
+      unitPrice,
+      taxRate,
+      lineTotal,
+      productId: product._id,
+      variantName: newItemSize || '',
+    };
+
+    setCart((prev) => [...prev, newItem]);
+
+    // Reset the product selection form
+    setNewItemProductId('');
+    setNewItemSize('');
+    setNewItemQty('1');
+    setNewItemUnitPrice('');
+    setNewItemTaxRate('0');
+    setNewItemDescription('');
+
+    toast.success(`Added "${description}" to cart`);
   };
 
-  const addLine = () => {
-    setFormData((prev) => ({
-      ...prev,
-      lines: [
-        ...prev.lines,
-        {
-          lineNo: prev.lines.length + 1,
-          itemType: 'product',
-          description: '',
-          qty: '1',
-          unitPrice: '',
-          taxRate: '0',
-          lineTotal: 0,
-          productId: '',
-          servicePlanId: '',
-          serviceAddonId: '',
-        },
-      ],
-    }));
+  // Remove item from cart
+  const handleRemoveFromCart = (cartId: string) => {
+    setCart((prev) =>
+      prev
+        .filter((item) => item.cartId !== cartId)
+        .map((item, idx) => ({ ...item, lineNo: idx + 1 }))
+    );
   };
 
-  const removeLine = (index: number) => {
-    setFormData((prev) => ({
-      ...prev,
-      lines: prev.lines
-        .filter((_, i) => i !== index)
-        .map((line, i) => ({
-          ...line,
-          lineNo: i + 1,
-        })),
-    }));
+  // Edit item in cart - pull it back to the product selection form
+  const handleEditCartItem = (item: CartItem) => {
+    setNewItemProductId(item.productId);
+    setNewItemSize(item.variantName);
+    setNewItemQty(String(item.qty));
+    setNewItemUnitPrice(String(item.unitPrice));
+    setNewItemTaxRate(String(item.taxRate));
+    setNewItemDescription(item.description);
+    // Remove the old item from cart so it gets re-added
+    handleRemoveFromCart(item.cartId);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (cart.length === 0) {
+      toast.error('Please add at least one item to the cart');
+      return;
+    }
 
     setSubmitting(true);
 
@@ -275,25 +385,18 @@ export default function OrderForm({
         orderDate: formData.orderDate,
         status: formData.status,
         currency: formData.currency,
-        lines: formData.lines.map((line) => ({
-          lineNo: line.lineNo,
-          itemType: line.itemType,
-          description: line.description,
-          qty: Number(line.qty),
-          unitPriceCents: Math.round(
-            Number(line.unitPrice) * 100
-          ),
-          taxRateBps: Math.round(
-            Number(line.taxRate) * 100
-          ),
-          lineTotalCents: Math.round(
-            line.lineTotal * 100
-          ),
-          productId: line.productId || undefined,
-          servicePlanId:
-            line.servicePlanId || undefined,
-          serviceAddonId:
-            line.serviceAddonId || undefined,
+        lines: cart.map((item) => ({
+          lineNo: item.lineNo,
+          itemType: item.itemType,
+          description: item.description,
+          qty: item.qty,
+          unitPriceCents: Math.round(item.unitPrice * 100),
+          taxRateBps: Math.round(item.taxRate * 100),
+          lineTotalCents: Math.round(item.lineTotal * 100),
+          productId: item.productId || undefined,
+          variantName: item.variantName || undefined,
+          servicePlanId: item.servicePlanId || undefined,
+          serviceAddonId: item.serviceAddonId || undefined,
         })),
       };
 
@@ -318,7 +421,6 @@ export default function OrderForm({
               ? 'Failed to update order'
               : 'Failed to create order')
         );
-
         setSubmitting(false);
         return;
       }
@@ -336,6 +438,7 @@ export default function OrderForm({
 
       if (!isEditing) {
         setFormData(getInitialData());
+        setCart([]);
       }
     } catch (_err) {
       toast.error('Network error occurred');
@@ -347,7 +450,7 @@ export default function OrderForm({
   if (loading) {
     return (
       <div className={styles.shell}>
-        <LoaderPulse/>
+        <LoaderPulse />
       </div>
     );
   }
@@ -362,11 +465,8 @@ export default function OrderForm({
           <div className={styles.container}>
             <div className={styles.sectionHeader}>
               <h3 className={styles.panelTitle}>
-                {editOrder
-                  ? 'Edit Order'
-                  : 'Order Information'}
+                {editOrder ? 'Edit Order' : 'Order Information'}
               </h3>
-
               <p className={styles.panelText}>
                 Create and manage customer orders.
               </p>
@@ -374,13 +474,10 @@ export default function OrderForm({
 
             <div className={styles.row}>
               <div className={styles.formGroup}>
-                <label className={styles.label}>
-                  Order Number
-                </label>
-
+                <label className={styles.label}>Order Number</label>
                 <input
                   className={styles.input}
-                  placeholder={editOrder ? formData.orderNo : "Auto-generated on save"}
+                  placeholder={editOrder ? formData.orderNo : 'Auto-generated on save'}
                   name="orderNo"
                   value={editOrder ? formData.orderNo : ''}
                   readOnly
@@ -395,10 +492,7 @@ export default function OrderForm({
               </div>
 
               <div className={styles.formGroup}>
-                <label className={styles.label}>
-                  Order Date *
-                </label>
-
+                <label className={styles.label}>Order Date *</label>
                 <input
                   type="date"
                   className={styles.input}
@@ -411,10 +505,7 @@ export default function OrderForm({
             </div>
 
             <div className={styles.formGroup}>
-              <label className={styles.label}>
-                Client Name *
-              </label>
-
+              <label className={styles.label}>Client Name *</label>
               <input
                 className={styles.input}
                 placeholder="e.g. John Doe"
@@ -426,10 +517,7 @@ export default function OrderForm({
             </div>
 
             <div className={styles.formGroup}>
-              <label className={styles.label}>
-                Client Email (optional)
-              </label>
-
+              <label className={styles.label}>Client Email (optional)</label>
               <input
                 type="email"
                 className={styles.input}
@@ -442,10 +530,7 @@ export default function OrderForm({
 
             <div className={styles.row}>
               <div className={styles.formGroup}>
-                <label className={styles.label}>
-                  Status
-                </label>
-
+                <label className={styles.label}>Status</label>
                 <div className={styles.selectWrapper}>
                   <select
                     className={styles.selectInput}
@@ -453,35 +538,17 @@ export default function OrderForm({
                     value={formData.status}
                     onChange={handleInputChange}
                   >
-                    <option value="pending">
-                      Pending
-                    </option>
-
-                    <option value="confirmed">
-                      Confirmed
-                    </option>
-
-                    <option value="cancelled">
-                      Cancelled
-                    </option>
-
-                    <option value="completed">
-                      Completed
-                    </option>
+                    <option value="pending">Pending</option>
+                    <option value="confirmed">Confirmed</option>
+                    <option value="cancelled">Cancelled</option>
+                    <option value="completed">Completed</option>
                   </select>
-
-                  <span
-                    className={styles.selectArrow}
-                    aria-hidden="true"
-                  ></span>
+                  <span className={styles.selectArrow} aria-hidden="true"></span>
                 </div>
               </div>
 
               <div className={styles.formGroup}>
-                <label className={styles.label}>
-                  Currency
-                </label>
-
+                <label className={styles.label}>Currency</label>
                 <div className={styles.selectWrapper}>
                   <select
                     className={styles.selectInput}
@@ -489,27 +556,12 @@ export default function OrderForm({
                     value={formData.currency}
                     onChange={handleInputChange}
                   >
-                    <option value="USD">
-                      USD - US Dollar
-                    </option>
-
-                    <option value="PKR">
-                      PKR - Pakistani Rupee
-                    </option>
-
-                    <option value="EUR">
-                      EUR - Euro
-                    </option>
-
-                    <option value="GBP">
-                      GBP - British Pound
-                    </option>
+                    <option value="PKR">PKR - Pakistani Rupee</option>
+                    <option value="USD">USD - US Dollar</option>
+                    <option value="EUR">EUR - Euro</option>
+                    <option value="GBP">GBP - British Pound</option>
                   </select>
-
-                  <span
-                    className={styles.selectArrow}
-                    aria-hidden="true"
-                  ></span>
+                  <span className={styles.selectArrow} aria-hidden="true"></span>
                 </div>
               </div>
             </div>
@@ -518,10 +570,7 @@ export default function OrderForm({
           {/* RIGHT SIDE */}
           <div className={styles.container}>
             <div className={styles.sectionHeader}>
-              <h3 className={styles.panelTitle}>
-                Order Summary
-              </h3>
-
+              <h3 className={styles.panelTitle}>Order Summary</h3>
               <p className={styles.panelText}>
                 Review totals before saving.
               </p>
@@ -531,54 +580,56 @@ export default function OrderForm({
               style={{
                 padding: '1rem',
                 borderRadius: '16px',
-                background:
-                  'rgba(255,255,255,0.05)',
+                background: 'rgba(255,255,255,0.05)',
                 marginBottom: '1rem',
               }}
             >
               <div
                 style={{
                   display: 'flex',
-                  justifyContent:
-                    'space-between',
+                  justifyContent: 'space-between',
+                  marginBottom: '0.75rem',
+                }}
+              >
+                <span>Items</span>
+                <strong>{cart.length}</strong>
+              </div>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
                   marginBottom: '0.75rem',
                 }}
               >
                 <span>Subtotal</span>
                 <strong>
-                  {formData.currency}{' '}
-                  {orderSubtotal.toFixed(2)}
+                  {formData.currency} {orderSubtotal.toFixed(2)}
                 </strong>
               </div>
 
               <div
                 style={{
                   display: 'flex',
-                  justifyContent:
-                    'space-between',
+                  justifyContent: 'space-between',
                   marginBottom: '0.75rem',
                 }}
               >
                 <span>Tax</span>
                 <strong>
-                  {formData.currency}{' '}
-                  {orderTax.toFixed(2)}
+                  {formData.currency} {orderTax.toFixed(2)}
                 </strong>
               </div>
 
               <div
                 style={{
                   display: 'flex',
-                  justifyContent:
-                    'space-between',
+                  justifyContent: 'space-between',
                   fontSize: '1.1rem',
                 }}
               >
                 <span>Total</span>
-
                 <strong>
-                  {formData.currency}{' '}
-                  {orderTotal.toFixed(2)}
+                  {formData.currency} {orderTotal.toFixed(2)}
                 </strong>
               </div>
             </div>
@@ -587,9 +638,7 @@ export default function OrderForm({
               type="submit"
               className={styles.button}
               disabled={submitting}
-              style={{
-                opacity: submitting ? 0.7 : 1,
-              }}
+              style={{ opacity: submitting ? 0.7 : 1 }}
             >
               {submitting
                 ? editOrder
@@ -602,244 +651,200 @@ export default function OrderForm({
           </div>
         </div>
 
-        {/* ORDER LINES */}
-        <div
-          className={styles.container}
-          style={{ marginTop: '2rem' }}
-        >
+        {/* PRODUCT SELECTOR - Add items to cart */}
+        <div className={styles.container} style={{ marginTop: '2rem' }}>
           <div className={styles.sectionHeader}>
-            <h3 className={styles.panelTitle}>
-              Order Line Items
-            </h3>
-
+            <h3 className={styles.panelTitle}>Add Products to Order</h3>
             <p className={styles.panelText}>
-              Add products and services to the
-              order.
+              Select a product, choose size (if applicable), set quantity, then add to cart.
             </p>
           </div>
 
-          {formData.lines.map((line, index) => (
-            <div
-              key={index}
-              style={{
-                border:
-                  '1px solid rgba(255,255,255,0.08)',
-                borderRadius: '16px',
-                padding: '1rem',
-                marginBottom: '1rem',
-              }}
-            >
-              <div className={styles.row}>
-                <div className={styles.formGroup}>
-                  <label className={styles.label}>
-                    Item Type
-                  </label>
-
-                  <div
-                    className={styles.selectWrapper}
-                  >
-                    <select
-                      className={
-                        styles.selectInput
-                      }
-                      value={line.itemType}
-                      onChange={(e) =>
-                        handleLineChange(
-                          index,
-                          'itemType',
-                          e.target.value
-                        )
-                      }
-                    >
-                      <option value="product">
-                        Product
-                      </option>
-
-                      <option value="service">
-                        Service
-                      </option>
-
-                      <option value="addon">
-                        Addon
-                      </option>
-
-                      <option value="other">
-                        Other
-                      </option>
-                    </select>
-
-                    <span
-                      className={
-                        styles.selectArrow
-                      }
-                      aria-hidden="true"
-                    ></span>
-                  </div>
-                </div>
-
-                <div className={styles.formGroup}>
-                  <label className={styles.label}>
-                    Product
-                  </label>
-
-                  <div
-                    className={styles.selectWrapper}
-                  >
-                    <select
-                      className={
-                        styles.selectInput
-                      }
-                      value={line.productId}
-                      onChange={(e) =>
-                        handleProductSelect(
-                          index,
-                          e.target.value
-                        )
-                      }
-                    >
-                      <option value="">
-                        Select Product
-                      </option>
-
-                      {products.map((product) => (
-                        <option
-                          key={product._id}
-                          value={product._id}
-                        >
-                          {product.name}
-                        </option>
-                      ))}
-                    </select>
-
-                    <span
-                      className={
-                        styles.selectArrow
-                      }
-                      aria-hidden="true"
-                    ></span>
-                  </div>
-                </div>
-              </div>
-
-              <div className={styles.formGroup}>
-                <label className={styles.label}>
-                  Description *
-                </label>
-
-                <textarea
-                  className={styles.input}
-                  rows={3}
-                  value={line.description}
-                  onChange={(e) =>
-                    handleLineChange(
-                      index,
-                      'description',
-                      e.target.value
-                    )
-                  }
-                  required
-                />
-              </div>
-
-              <div className={styles.row}>
-                <div className={styles.formGroup}>
-                  <label className={styles.label}>
-                    Quantity
-                  </label>
-
-                  <input
-                    type="number"
-                    min="1"
-                    className={styles.input}
-                    value={line.qty}
-                    onChange={(e) =>
-                      handleLineChange(
-                        index,
-                        'qty',
-                        e.target.value
-                      )
-                    }
-                  />
-                </div>
-
-                <div className={styles.formGroup}>
-                  <label className={styles.label}>
-                    Unit Price
-                  </label>
-
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    className={styles.input}
-                    value={line.unitPrice}
-                    onChange={(e) =>
-                      handleLineChange(
-                        index,
-                        'unitPrice',
-                        e.target.value
-                      )
-                    }
-                  />
-                </div>
-
-                <div className={styles.formGroup}>
-                  <label className={styles.label}>
-                    Tax %
-                  </label>
-
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    className={styles.input}
-                    value={line.taxRate}
-                    onChange={(e) =>
-                      handleLineChange(
-                        index,
-                        'taxRate',
-                        e.target.value
-                      )
-                    }
-                  />
-                </div>
-
-                <div className={styles.formGroup}>
-                  <label className={styles.label}>
-                    Total
-                  </label>
-
-                  <input
-                    className={styles.input}
-                    value={line.lineTotal.toFixed(
-                      2
-                    )}
-                    disabled
-                  />
-                </div>
-              </div>
-
-              {formData.lines.length > 1 && (
-                <button
-                  type="button"
-                  className={styles.button}
-                  onClick={() =>
-                    removeLine(index)
-                  }
+          <div className={styles.row}>
+            <div className={styles.formGroup}>
+              <label className={styles.label}>Product *</label>
+              <div className={styles.selectWrapper}>
+                <select
+                  className={styles.selectInput}
+                  value={newItemProductId}
+                  onChange={(e) => handleNewItemProductChange(e.target.value)}
                 >
-                  Remove Line
-                </button>
-              )}
+                  <option value="">Select Product</option>
+                  {products.map((product) => (
+                    <option key={product._id} value={product._id}>
+                      {product.name}
+                    </option>
+                  ))}
+                </select>
+                <span className={styles.selectArrow} aria-hidden="true"></span>
+              </div>
             </div>
-          ))}
+
+            {/* Size dropdown - shown only when product has sizes */}
+            {selectedProduct && selectedProduct.sizes && selectedProduct.sizes.length > 0 && (
+              <div className={styles.formGroup}>
+                <label className={styles.label}>Size *</label>
+                <div className={styles.selectWrapper}>
+                  <select
+                    className={styles.selectInput}
+                    value={newItemSize}
+                    onChange={(e) => handleNewItemSizeChange(e.target.value)}
+                  >
+                    <option value="">Select Size</option>
+                    {selectedProduct.sizes.map((s) => (
+                      <option key={s.name} value={s.name}>
+                        {s.name}
+                        {s.salePrice != null ? ` - ${formData.currency} ${s.salePrice}` : ''}
+                        {' | Stock: '}
+                        {s.stock}
+                      </option>
+                    ))}
+                  </select>
+                  <span className={styles.selectArrow} aria-hidden="true"></span>
+                </div>
+              </div>
+            )}
+
+            <div className={styles.formGroup}>
+              <label className={styles.label}>Quantity</label>
+              <input
+                type="number"
+                min="1"
+                className={styles.input}
+                value={newItemQty}
+                onChange={(e) => setNewItemQty(e.target.value)}
+              />
+            </div>
+
+            <div className={styles.formGroup}>
+              <label className={styles.label}>Unit Price *</label>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                className={styles.input}
+                value={newItemUnitPrice}
+                placeholder={selectedProductSize?.salePrice != null ? String(selectedProductSize.salePrice) : selectedProduct?.defaultSalePrice?.toString() || ''}
+                onChange={(e) => setNewItemUnitPrice(e.target.value)}
+              />
+            </div>
+
+            <div className={styles.formGroup}>
+              <label className={styles.label}>Tax %</label>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                className={styles.input}
+                value={newItemTaxRate}
+                onChange={(e) => setNewItemTaxRate(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className={styles.formGroup}>
+            <label className={styles.label}>Description</label>
+            <textarea
+              className={styles.input}
+              rows={2}
+              value={newItemDescription}
+              onChange={(e) => setNewItemDescription(e.target.value)}
+              placeholder="Product description (auto-filled)"
+            />
+          </div>
 
           <button
             type="button"
             className={styles.button}
-            onClick={addLine}
+            onClick={handleAddToCart}
+            style={{ marginTop: '0.5rem' }}
           >
-            + Add Line Item
+            + Add to Cart
           </button>
+        </div>
+
+        {/* CART - Review items before creating order */}
+        <div className={styles.container} style={{ marginTop: '2rem' }}>
+          <div className={styles.sectionHeader}>
+            <h3 className={styles.panelTitle}>
+              Cart ({cart.length} item{cart.length !== 1 ? 's' : ''})
+            </h3>
+            <p className={styles.panelText}>
+              Review items below. You can edit or remove items before creating the order.
+            </p>
+          </div>
+
+          {cart.length === 0 ? (
+            <p style={{ color: '#667085', textAlign: 'center', padding: '2rem' }}>
+              No items in cart. Add products above.
+            </p>
+          ) : (
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+                <thead>
+                  <tr style={{ borderBottom: '1px solid #e4e7ec' }}>
+                    <th style={{ padding: '0.5rem', textAlign: 'left', color: '#667085', fontWeight: 600 }}>#</th>
+                    <th style={{ padding: '0.5rem', textAlign: 'left', color: '#667085', fontWeight: 600 }}>Product</th>
+                    <th style={{ padding: '0.5rem', textAlign: 'left', color: '#667085', fontWeight: 600 }}>Size</th>
+                    <th style={{ padding: '0.5rem', textAlign: 'right', color: '#667085', fontWeight: 600 }}>Qty</th>
+                    <th style={{ padding: '0.5rem', textAlign: 'right', color: '#667085', fontWeight: 600 }}>Unit Price</th>
+                    <th style={{ padding: '0.5rem', textAlign: 'right', color: '#667085', fontWeight: 600 }}>Tax %</th>
+                    <th style={{ padding: '0.5rem', textAlign: 'right', color: '#667085', fontWeight: 600 }}>Total</th>
+                    <th style={{ padding: '0.5rem', textAlign: 'center', color: '#667085', fontWeight: 600 }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {cart.map((item) => (
+                    <tr key={item.cartId} style={{ borderBottom: '1px solid #f0f0f0' }}>
+                      <td style={{ padding: '0.5rem' }}>{item.lineNo}</td>
+                      <td style={{ padding: '0.5rem' }}>{item.description}</td>
+                      <td style={{ padding: '0.5rem' }}>{item.variantName || '-'}</td>
+                      <td style={{ padding: '0.5rem', textAlign: 'right' }}>{item.qty}</td>
+                      <td style={{ padding: '0.5rem', textAlign: 'right' }}>
+                        {formData.currency} {item.unitPrice.toFixed(2)}
+                      </td>
+                      <td style={{ padding: '0.5rem', textAlign: 'right' }}>{item.taxRate}%</td>
+                      <td style={{ padding: '0.5rem', textAlign: 'right', fontWeight: 600 }}>
+                        {formData.currency} {item.lineTotal.toFixed(2)}
+                      </td>
+                      <td style={{ padding: '0.5rem', textAlign: 'center' }}>
+                        <button
+                          type="button"
+                          onClick={() => handleEditCartItem(item)}
+                          style={{
+                            padding: '0.25rem 0.5rem',
+                            marginRight: '0.25rem',
+                            borderRadius: '4px',
+                            border: '1px solid #d0d5dd',
+                            background: '#fff',
+                            cursor: 'pointer',
+                            fontSize: '0.75rem',
+                          }}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveFromCart(item.cartId)}
+                          style={{
+                            padding: '0.25rem 0.5rem',
+                            borderRadius: '4px',
+                            border: '1px solid #fecdca',
+                            background: '#fef3f2',
+                            color: '#b42318',
+                            cursor: 'pointer',
+                            fontSize: '0.75rem',
+                          }}
+                        >
+                          Remove
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </form>
     </div>

@@ -4,11 +4,9 @@ import { authenticate, requireRole } from '../../middlewares';
 
 const router = Router();
 
-// All order routes require authentication and accounts/admin role
 router.use(authenticate);
 router.use(requireRole('accounts', 'admin'));
 
-// Create order
 router.post(
   '/',
   (req, res, next) => orderController.createOrder(req, res, next)
@@ -39,6 +37,12 @@ router.get('/:id', (req, res, next) => orderController.getOrder(req, res, next))
 router.patch(
   '/:id',
   (req, res, next) => orderController.updateOrder(req, res, next)
+);
+
+// Complete order (processes and deducts stock)
+router.post(
+  '/:id/complete',
+  (req, res, next) => orderController.completeOrder(req, res, next)
 );
 
 // Cancel order

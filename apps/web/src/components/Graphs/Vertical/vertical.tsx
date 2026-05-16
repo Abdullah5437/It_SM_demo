@@ -52,8 +52,6 @@ export default function VerticalChart() {
     fetchData();
   }, [period]);
 
-
-
   const buttonStyle = (p: Period): React.CSSProperties => ({
     padding: '0.4rem 0.9rem',
     borderRadius: '8px',
@@ -86,10 +84,10 @@ export default function VerticalChart() {
   };
 
   // Format currency value for labels
-  const formatValue = (val: number): string => {
-    if (val >= 1000) return `$${(val / 1000).toFixed(1)}k`;
-    return `$${val.toFixed(0)}`;
-  };
+ const formatValue = (val: number): string => {
+  if (val >= 1000) return `PKR ${(val / 1000).toFixed(1)}k`;
+  return `PKR ${val.toFixed(0)}`;
+};
 
   const renderDonutContent = () => {
     if (loading) {

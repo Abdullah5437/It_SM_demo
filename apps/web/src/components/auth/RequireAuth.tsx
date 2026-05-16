@@ -37,13 +37,10 @@ export function RequireAuth({
     return <>{children}</>;
   }
 
-  const hasAccess =
-  user &&
-  (
-    requireAll
-      ? roles.every(role => user.roles.includes(role))
-      : roles.some(role => user.roles.includes(role))
-  );
+  const hasAccess = requireAll
+    ? roles.every(role => user!.roles.includes(role))
+    : roles.some(role => user!.roles.includes(role));
+
   if (!hasAccess) {
     return fallback || (
       <div className="text-center p-8">

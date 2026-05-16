@@ -8,13 +8,8 @@ interface Product {
   _id: string;
   sku: string;
   name: string;
-  title?: string;
   description?: string;
-  image?: string;
   type: string;
-  category?: string;
-  subcategory?: string;
-  subsubcategory?: string;
   defaultSalePrice: number;
   defaultCost: number;
   currency: string;
@@ -22,19 +17,14 @@ interface Product {
   status: string;
   createdAt: string;
 }
-type ProductStatus = 'active' | 'inactive' | 'suspended';
-
-type EditProduct = Omit<Product, 'status'> & {
-  status: ProductStatus;
-};
 
 export default (() => {
   const [view, setView] = useState<'table' | 'create' | 'edit'>('table');
-  const [editProduct, setEditProduct] = useState<EditProduct | null>(null);
+  const [editProduct, setEditProduct] = useState<Product | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
   const handleEdit = useCallback((product: Product) => {
-    setEditProduct(product as EditProduct);
+    setEditProduct(product);
     setView('edit');
   }, []);
 

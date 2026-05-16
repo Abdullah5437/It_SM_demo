@@ -12,11 +12,9 @@ interface UserFormProps {
   } | null;
   onSuccess?: () => void;
 }
-type ErrorResponse = {
-  message?: string;
-};
+
 export default function UserForm({ editUser, onSuccess }: UserFormProps) {
-  const [signupKey, setSignupKey] = useState<string>('');
+    const [signupKey, setSignupKey] = useState('') as any;
   const [formData, setFormData] = useState({
   name: editUser?.name || '',
   email: editUser?.email || '',
@@ -37,24 +35,21 @@ export default function UserForm({ editUser, onSuccess }: UserFormProps) {
     { value: 'admin', label: 'Admin', description: 'Full administrative access' },
   ];
 
- const handleInputChange = (
-  e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-) => {
-  const { name, value, type } = e.target;
-
-  setFormData(prev => ({
-    ...prev,
-    [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
-  }));
-
-  if (errors[name]) {
-    setErrors(prev => {
-      const newErrors = { ...prev };
-      delete newErrors[name];
-      return newErrors;
-    });
-  }
-};
+  const handleInputChange = (e: any) => {
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
+    // Clear error for this field when user starts typing
+    if (errors[name]) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
+  };
 
   const handleRoleChange = (role: string) => {
     setFormData(prev => {
@@ -133,7 +128,7 @@ const handleSubmit = async (e: React.FormEvent) => {
     });
 
     if (!res.ok) {
-      const errorData = await res.json() as ErrorResponse;
+      const errorData = await res.json() as any;
       throw new Error(errorData.message || 'Something went wrong');
     }
 
@@ -154,13 +149,10 @@ const handleSubmit = async (e: React.FormEvent) => {
       onSuccess();
     }
 
-  } catch (error: unknown) {
-  const message =
-    error instanceof Error ? error.message : 'Something went wrong';
-
-  console.error('API Error:', message);
-  setErrors({ api: message });
-}
+  } catch (error: any) {
+    console.error('API Error:', error.message);
+    setErrors({ api: error.message });
+  }
 };
 
   return (
@@ -196,7 +188,7 @@ const handleSubmit = async (e: React.FormEvent) => {
     placeholder="Enter admin signup key"
     name="signupKey"
     value={signupKey}
-  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+  onChange={(e:any) =>
     setSignupKey(e.target.value)
   }
   />

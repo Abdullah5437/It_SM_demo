@@ -17,8 +17,13 @@ export type OrderCreate = z.infer<typeof orderCreateSchema>;
 
 // Order Update Schema
 export const orderUpdateSchema = z.object({
+  clientName: z.string().min(1).optional(),
+  clientEmail: z.string().email().optional(),
+  orderDate: z.string().optional(),
+  status: z.enum(['pending', 'confirmed', 'cancelled', 'completed']).optional(),
+  currency: z.string().length(3).toUpperCase().optional(),
   lines: z.array(orderLineItemSchema).optional(),
-}).strict();
+});
 
 export type OrderUpdate = z.infer<typeof orderUpdateSchema>;
 

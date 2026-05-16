@@ -10,6 +10,7 @@ export const quoteLineItemSchema = z.object({
   taxRateBps: z.number().nonnegative(),
   lineTotalCents: z.number().nonnegative(),
   productId: z.string().optional(),
+  variantName: z.string().optional(),
   servicePlanId: z.string().optional(),
   serviceAddonId: z.string().optional(),
 });

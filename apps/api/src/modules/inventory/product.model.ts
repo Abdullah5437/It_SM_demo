@@ -1,20 +1,18 @@
 import { Schema, model, Document } from 'mongoose';
 
-export interface IProductVariant {
+export interface IProductSize {
   name: string;
-  sku?: string;
   stock: number;
   salePrice?: number;
   costPrice?: number;
 }
 
-const variantSchema = new Schema(
+const sizeSchema = new Schema(
   {
     name: { type: String, required: true },
-    sku: { type: String },
     stock: { type: Number, default: 0 },
-    salePrice: { type: Number, default: 0 },
-    costPrice: { type: Number, default: 0 },
+    salePrice: { type: Number },
+    costPrice: { type: Number },
   },
   { _id: false }
 );
@@ -24,14 +22,8 @@ export interface IProduct extends Document {
   name: string;
   title?: string;
   description?: string;
-  image?: string;
 
-  type: 'hardware' | 'software' | 'component' | 'other';
-
-  category?: string;
-  subcategory?: string;
-  subsubcategory?: string;
-  categoryId?: Schema.Types.ObjectId;
+  type: 'Mens' | 'Women' | 'Children' | 'Other';
 
   defaultSalePrice: number;
   defaultCost: number;
@@ -41,7 +33,7 @@ export interface IProduct extends Document {
   trackSerial: boolean;
 
   stock: number;
-  variants: IProductVariant[];
+  sizes: IProductSize[];
 
   status: 'active' | 'inactive' | 'discontinued';
 
@@ -54,30 +46,24 @@ const productSchema = new Schema<IProduct>({
   name: { type: String, required: true },
   title: { type: String },
   description: { type: String },
-  image: { type: String },
 
   type: {
     type: String,
-    enum: ['hardware', 'software', 'component', 'other'],
+    enum: ['Mens', 'Women', 'Children', 'Other'],
     required: true,
     index: true,
   },
 
-  category: { type: String },
-  subcategory: { type: String },
-  subsubcategory: { type: String },
-  categoryId: { type: Schema.Types.ObjectId, ref: 'Category' },
-
   defaultSalePrice: { type: Number, required: true },
   defaultCost: { type: Number, required: true },
-  currency: { type: String, required: true, default: 'USD' },
+  currency: { type: String, required: true, default: 'PKR' },
 
   trackInventory: { type: Boolean, default: true },
   trackSerial: { type: Boolean, default: false },
 
   stock: { type: Number, default: 0 },
 
-  variants: { type: [variantSchema], default: [] },
+  sizes: { type: [sizeSchema], default: [] },
 
   status: {
     type: String,
