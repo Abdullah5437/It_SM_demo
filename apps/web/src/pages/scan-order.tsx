@@ -63,7 +63,7 @@ export default function ScanOrderPage() {
     setSearching(true);
     try {
       const res = await window.fetch(
-        `http://localhost:4000/api/v1/inventory/products?limit=100`,
+        `https://aquamarine-stork-973169.hostingersite.com/api/v1/inventory/products?limit=100`,
         { headers }
       );
       const json = await res.json();
@@ -180,7 +180,7 @@ export default function ScanOrderPage() {
         lines,
       };
 
-      const res = await window.fetch('http://localhost:4000/api/v1/billing/orders', {
+      const res = await window.fetch('https://aquamarine-stork-973169.hostingersite.com/api/v1/billing/orders', {
         method: 'POST',
         headers,
         body: JSON.stringify(payload),

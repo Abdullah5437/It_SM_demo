@@ -239,7 +239,7 @@ JWT_REFRESH_SECRET=your-refresh-secret
 
 # URLs
 FRONTEND_URL=http://localhost:3000
-API_BASE_URL=http://localhost:4000
+API_BASE_URL=https://aquamarine-stork-973169.hostingersite.com
 API_PORT=3001
 NODE_ENV=development
 ```

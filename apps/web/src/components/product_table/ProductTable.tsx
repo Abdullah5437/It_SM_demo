@@ -98,7 +98,7 @@ export default function ProductTable({ onEdit, onRefresh, refreshKey }: ProductT
 
   const fetchProducts = useCallback(async () => {
     try {
-      const res = await window.fetch('http://localhost:4000/api/v1/inventory/products?limit=100', { headers });
+      const res = await window.fetch('https://aquamarine-stork-973169.hostingersite.com/api/v1/inventory/products?limit=100', { headers });
       const json = await res.json();
       if (json.success) setProducts(json.data);
     } catch {
@@ -112,7 +112,7 @@ export default function ProductTable({ onEdit, onRefresh, refreshKey }: ProductT
 
   const handleDelete = async (id: string) => {
     try {
-      const res = await window.fetch(`http://localhost:4000/api/v1/inventory/products/${id}`, {
+      const res = await window.fetch(`https://aquamarine-stork-973169.hostingersite.com/api/v1/inventory/products/${id}`, {
         method: 'DELETE',
         headers,
       });

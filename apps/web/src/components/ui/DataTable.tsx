@@ -192,7 +192,7 @@ export default function Table({
       setLoading(true);
 
       const response = await fetch(
-        'http://localhost:4000/api/v1/users'
+        'https://aquamarine-stork-973169.hostingersite.com/api/v1/users'
       );
       const data = await response.json();
 
@@ -255,7 +255,7 @@ export default function Table({
 
               try {
                 await fetch(
-                  `http://localhost:4000/api/v1/users/${user._id}`,
+                  `https://aquamarine-stork-973169.hostingersite.com/api/v1/users/${user._id}`,
                   {
                     method: 'DELETE',
                   }

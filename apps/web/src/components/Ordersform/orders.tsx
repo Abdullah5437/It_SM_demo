@@ -164,10 +164,10 @@ export default function OrderForm({
   const fetchData = useCallback(async () => {
     try {
       const [productsRes, servicesRes] = await Promise.all([
-        window.fetch('http://localhost:4000/api/v1/inventory/products', {
+        window.fetch('https://aquamarine-stork-973169.hostingersite.com/api/v1/inventory/products', {
           headers,
         }),
-        window.fetch('http://localhost:4000/api/v1/services/plans', {
+        window.fetch('https://aquamarine-stork-973169.hostingersite.com/api/v1/services/plans', {
           headers,
         }),
       ]);
@@ -403,8 +403,8 @@ export default function OrderForm({
       const isEditing = !!editOrder?._id;
 
       const url = isEditing
-        ? `http://localhost:4000/api/v1/billing/orders/${editOrder._id}`
-        : 'http://localhost:4000/api/v1/billing/orders';
+        ? `https://aquamarine-stork-973169.hostingersite.com/api/v1/billing/orders/${editOrder._id}`
+        : 'https://aquamarine-stork-973169.hostingersite.com/api/v1/billing/orders';
 
       const res = await window.fetch(url, {
         method: isEditing ? 'PATCH' : 'POST',

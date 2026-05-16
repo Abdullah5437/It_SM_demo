@@ -38,7 +38,7 @@ export default function LoginForm() {
     setError(null);
 
     try {
-      const res = await fetch('http://localhost:4000/api/v1/auth/login', {
+      const res = await fetch('https://aquamarine-stork-973169.hostingersite.com/api/v1/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

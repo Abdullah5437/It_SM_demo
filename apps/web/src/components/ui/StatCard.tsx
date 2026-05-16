@@ -44,7 +44,7 @@ export default function StatsCards(): JSX.Element {
         }
 
         const res = await window.fetch(
-          'http://localhost:4000/api/v1/billing/orders/stats',
+          'https://aquamarine-stork-973169.hostingersite.com/api/v1/billing/orders/stats',
           { headers }
         );
         const json = await res.json();

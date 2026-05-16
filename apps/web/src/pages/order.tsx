@@ -60,7 +60,7 @@ export default function OrderPage() {
   const fetchOrders = useCallback(async (limit: number = 10, skip: number = 0) => {
     try {
       setLoading(true);
-      const res = await window.fetch(`http://localhost:4000/api/v1/billing/orders?limit=${limit}&skip=${skip}`, { headers });
+      const res = await window.fetch(`https://aquamarine-stork-973169.hostingersite.com/api/v1/billing/orders?limit=${limit}&skip=${skip}`, { headers });
       const json = await res.json();
       if (json.success) {
         setOrders(json.data || []);
@@ -99,7 +99,7 @@ export default function OrderPage() {
 
     try {
       const res = await window.fetch(
-        `http://localhost:4000/api/v1/billing/orders/${deleteConfirmOrder._id}`,
+        `https://aquamarine-stork-973169.hostingersite.com/api/v1/billing/orders/${deleteConfirmOrder._id}`,
         { method: 'DELETE', headers }
       );
       const json = await res.json();

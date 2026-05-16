@@ -200,8 +200,8 @@ export default function ProductForm({ editProduct, onSuccess }: ProductFormProps
 
     try {
       const url = isEditing
-        ? `http://localhost:4000/api/v1/inventory/products/${editProduct._id}`
-        : 'http://localhost:4000/api/v1/inventory/products';
+        ? `https://aquamarine-stork-973169.hostingersite.com/api/v1/inventory/products/${editProduct._id}`
+        : 'https://aquamarine-stork-973169.hostingersite.com/api/v1/inventory/products';
 
       const res = await window.fetch(url, {
         method: isEditing ? 'PATCH' : 'POST',

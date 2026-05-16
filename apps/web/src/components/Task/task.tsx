@@ -27,7 +27,7 @@ export default function Task() {
         }
 
         const res = await window.fetch(
-          'http://localhost:4000/api/v1/billing/orders/dashboard-slides',
+          'https://aquamarine-stork-973169.hostingersite.com/api/v1/billing/orders/dashboard-slides',
           { headers }
         );
         const json = await res.json();

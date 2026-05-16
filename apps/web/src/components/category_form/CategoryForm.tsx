@@ -63,7 +63,7 @@ export default function CategoryForm() {
 
   const fetchCategories = useCallback(async () => {
     try {
-      const res = await window.fetch('http://localhost:4000/api/v1/categories/categories', { headers });
+      const res = await window.fetch('https://aquamarine-stork-973169.hostingersite.com/api/v1/categories/categories', { headers });
       const json = await res.json();
       if (json.success) setCategories(json.data);
     } catch {
@@ -80,7 +80,7 @@ export default function CategoryForm() {
     e.preventDefault();
     if (!catName.trim()) return;
     try {
-      const res = await window.fetch('http://localhost:4000/api/v1/categories/categories', {
+      const res = await window.fetch('https://aquamarine-stork-973169.hostingersite.com/api/v1/categories/categories', {
         method: 'POST',
         headers,
         body: JSON.stringify({
@@ -105,7 +105,7 @@ export default function CategoryForm() {
     e.preventDefault();
     if (!subCatId || !subName.trim()) return;
     try {
-      const res = await window.fetch(`http://localhost:4000/api/v1/categories/categories/${subCatId}/subcategories`, {
+      const res = await window.fetch(`https://aquamarine-stork-973169.hostingersite.com/api/v1/categories/categories/${subCatId}/subcategories`, {
         method: 'POST',
         headers,
         body: JSON.stringify({ name: subName.trim(), description: subDesc.trim() || undefined }),
@@ -126,7 +126,7 @@ export default function CategoryForm() {
     e.preventDefault();
     if (!ssCatId || !ssSubName || !ssName.trim()) return;
     try {
-      const res = await window.fetch(`http://localhost:4000/api/v1/categories/categories/${ssCatId}/subcategories/${encodeURIComponent(ssSubName)}/subsubcategories`, {
+      const res = await window.fetch(`https://aquamarine-stork-973169.hostingersite.com/api/v1/categories/categories/${ssCatId}/subcategories/${encodeURIComponent(ssSubName)}/subsubcategories`, {
         method: 'POST',
         headers,
         body: JSON.stringify({ name: ssName.trim(), description: ssDesc.trim() || undefined }),
@@ -157,7 +157,7 @@ export default function CategoryForm() {
   const handleUpdateCategory = async (catId: string) => {
     if (!editCatName.trim()) return;
     try {
-      const res = await window.fetch(`http://localhost:4000/api/v1/categories/categories/${catId}`, {
+      const res = await window.fetch(`https://aquamarine-stork-973169.hostingersite.com/api/v1/categories/categories/${catId}`, {
         method: 'PATCH',
         headers,
         body: JSON.stringify({
@@ -191,7 +191,7 @@ export default function CategoryForm() {
   const handleUpdateSubcategory = async (catId: string, oldName: string) => {
     if (!editSubName.trim()) return;
     try {
-      const res = await window.fetch(`http://localhost:4000/api/v1/categories/categories/${catId}/subcategories/${encodeURIComponent(oldName)}`, {
+      const res = await window.fetch(`https://aquamarine-stork-973169.hostingersite.com/api/v1/categories/categories/${catId}/subcategories/${encodeURIComponent(oldName)}`, {
         method: 'PATCH',
         headers,
         body: JSON.stringify({
@@ -224,7 +224,7 @@ export default function CategoryForm() {
   const handleUpdateSubSubcategory = async (catId: string, subName: string, oldSsName: string) => {
     if (!editSsName.trim()) return;
     try {
-      const res = await window.fetch(`http://localhost:4000/api/v1/categories/categories/${catId}/subcategories/${encodeURIComponent(subName)}/subsubcategories/${encodeURIComponent(oldSsName)}`, {
+      const res = await window.fetch(`https://aquamarine-stork-973169.hostingersite.com/api/v1/categories/categories/${catId}/subcategories/${encodeURIComponent(subName)}/subsubcategories/${encodeURIComponent(oldSsName)}`, {
         method: 'PATCH',
         headers,
         body: JSON.stringify({

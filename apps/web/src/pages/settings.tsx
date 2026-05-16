@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { RequireAuth } from '../components/auth/RequireAuth';
 
-const API_BASE = 'http://localhost:4000/api/v1';
+const API_BASE = 'https://aquamarine-stork-973169.hostingersite.com/api/v1';
 
 interface Setting {
   _id: string;

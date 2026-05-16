@@ -5,7 +5,7 @@ import LoaderPulse from '../components/Loader/Loader';
 import { usePagination } from '../hooks/usePagination';
 import { useSystemSettings } from '../hooks/useSystemSettings';
 
-const API_BASE = 'http://localhost:4000/api/v1';
+const API_BASE = 'https://aquamarine-stork-973169.hostingersite.com/api/v1';
 
 // ─── Interfaces ───────────────────────────────────────────
 interface InvoiceItem {

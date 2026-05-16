@@ -31,7 +31,7 @@ export const env = {
   // Application
   nodeEnv: process.env.NODE_ENV || 'development',
   port: parseInt(process.env.PORT || '3000', 10),
-  apiBaseUrl: process.env.API_BASE_URL || 'http://localhost:4000',
+  apiBaseUrl: process.env.API_BASE_URL || 'https://aquamarine-stork-973169.hostingersite.com',
   frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
 
   // Database

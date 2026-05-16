@@ -113,8 +113,8 @@ const handleSubmit = async (e: React.FormEvent) => {
 
   try {
     const url = isEditing
-      ? `http://localhost:4000/api/v1/users/${editUser._id}`
-      : 'http://localhost:4000/api/v1/users';
+      ? `https://aquamarine-stork-973169.hostingersite.com/api/v1/users/${editUser._id}`
+      : 'https://aquamarine-stork-973169.hostingersite.com/api/v1/users';
 
     const res = await fetch(url, {
       method: isEditing ? 'PATCH' : 'POST',
